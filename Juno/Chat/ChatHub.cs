@@ -92,6 +92,6 @@ namespace Juno.Chat
 
                 return base.OnConnectedAsync();
             }
-        }
+        }       
     }
 }
