@@ -1,4 +1,6 @@
-﻿using Juno.Model;
+﻿using Juno.Helpers;
+using Juno.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -7,17 +9,24 @@ using System.Threading.Tasks;
 
 namespace Juno.Chat
 {
+    [Authorize]
     public class ChatHub : Hub
     {
         private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
+        private NameUserIdProvider _nameUserIdProvider;
 
         public static IEnumerable<ParticipantResponseViewModel> ConnectedParticipants(string currentUserId)
         {
             return AllConnectedParticipants
                 .Where(x => x.Participant.Id != currentUserId);
         }
+
+        //public ChatHub(NameUserIdProvider nameUserIdProvider)
+        //{
+        //    _nameUserIdProvider = nameUserIdProvider;
+        //}
 
         public void Join(string userName)
         {
@@ -31,7 +40,7 @@ namespace Juno.Chat
                     },
                     Participant = new ChatParticipantViewModel()
                     {
-                        DisplayName = userName,
+                        DisplayName = Context.UserIdentifier,
                         Id = Context.ConnectionId
                     }
                 });

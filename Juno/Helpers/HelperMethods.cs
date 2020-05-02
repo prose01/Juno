@@ -27,13 +27,5 @@ namespace Juno.Helpers
 
             return await _profileRepository.GetCurrentProfileByAuth0Id(auth0Id) ?? new CurrentUser(); // Burde smide en fejl hvis bruger ikke findes.
         }
-
-        /// <summary>Gets the current auth0 identifier for the user.</summary>
-        /// <param name="user">The user.</param>
-        /// <returns>Auth0Id</returns>
-        public string GetCurrentUserAuth0Id(ClaimsPrincipal user)
-        {
-            return user.Claims.FirstOrDefault(c => c.Type == _nameidentifier)?.Value;
-        }
     }
 }
