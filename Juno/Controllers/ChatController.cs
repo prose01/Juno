@@ -3,6 +3,7 @@ using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -30,18 +31,18 @@ namespace Juno.Controllers
             chatParticipants.Add(new ChatParticipantViewModel()
             {
                 ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "1",
-                DisplayName = "Arya Stark",
-                Avatar = "https://66.media.tumblr.com/avatar_9dd9bb497b75_128.pnj",
+                Id = "auth0|5dcbcd3c1e0b6c0e8b05a5e2",
+                DisplayName = "Peter",
+                Avatar = "",
                 Status = 0
             });
 
             chatParticipants.Add(new ChatParticipantViewModel()
             {
                 ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "1",
-                DisplayName = "Cersei Lannister",
-                Avatar = "https://thumbnail.myheritageimages.com/502/323/78502323/000/000114_884889c3n33qfe004v5024_C_64x64C.jpg",
+                Id = "auth0|5c62f8a596979e1735449127",
+                DisplayName = "Kurt Hansen",
+                Avatar = "",
                 Status = 1
             });
 
@@ -50,7 +51,7 @@ namespace Juno.Controllers
                 ParticipantType = ChatParticipantTypeEnum.User,
                 Id = "1",
                 DisplayName = "Daenerys Targaryen",
-                Avatar = "https://68.media.tumblr.com/avatar_d28d7149f567_128.png",
+                Avatar = "",
                 Status = 2
             });
 
@@ -64,21 +65,33 @@ namespace Juno.Controllers
 
             List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
-            var currentUser = await _helper.GetCurrentUserProfile(User);
+            //var currentUser = await _helper.GetCurrentUserProfile(User);
 
             var friends = await this.ListFriends();
 
             foreach (var friend in friends)
             {
-                participantResponses.Add(new ParticipantResponseViewModel()
-                {
-                    Participant = friend,
-                    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }
-                });
+                //participantResponses.Add(new ParticipantResponseViewModel()
+                //{
+                //    Participant = friend,
+                //    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }
+                //});
 
             }
 
             return participantResponses;
+        }
+
+        [NoCache]
+        [HttpPost("~/MessageHistory")]
+        public async Task<IEnumerable<MessageViewModel>> MessageHistory()
+        {
+            //var currentUser = await _helper.GetCurrentUserProfile(User);
+
+            // Get from database
+            //List<MessageViewModel> messageHistory = this.mockMessageHistory();
+
+            return _helper.mockMessageHistorylist;
         }
     }
 }

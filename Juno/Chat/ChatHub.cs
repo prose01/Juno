@@ -1,4 +1,4 @@
-﻿using Juno.Helpers;
+﻿using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -15,18 +15,19 @@ namespace Juno.Chat
         private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
-        private NameUserIdProvider _nameUserIdProvider;
+
+        private readonly IHelperMethods _helper;
+
+        public ChatHub(IHelperMethods helperMethod)
+        {
+            _helper = helperMethod;
+        }
 
         public static IEnumerable<ParticipantResponseViewModel> ConnectedParticipants(string currentUserId)
         {
             return AllConnectedParticipants
                 .Where(x => x.Participant.Id != currentUserId);
         }
-
-        //public ChatHub(NameUserIdProvider nameUserIdProvider)
-        //{
-        //    _nameUserIdProvider = nameUserIdProvider;
-        //}
 
         public void Join(string userName)
         {
@@ -40,8 +41,9 @@ namespace Juno.Chat
                     },
                     Participant = new ChatParticipantViewModel()
                     {
-                        DisplayName = Context.UserIdentifier,
-                        Id = Context.ConnectionId
+                        DisplayName = userName,
+                        Id = Context.ConnectionId,
+                        Auth0Id = Context.UserIdentifier
                     }
                 });
 
@@ -56,10 +58,20 @@ namespace Juno.Chat
         public void SendMessage(MessageViewModel message)
         {
             var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
+            //var receiver = AllConnectedParticipants.Find(x => x.Participant.Id == message.ToId);
 
             if (sender != null)
             {
+                // Set From Auth0Id
+                message.FromAuth0Id = Context.UserIdentifier;
+
+                // Set To Auth0Id
+                //message.ToAuth0Id = Context.UserIdentifier;
+
+                // Save to databaes
+                _helper.mockMessageHistorylist.Add(message);
                 Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                //Clients.All.SendAsync("messageReceived", sender.Participant, message);
             }
         }
 
