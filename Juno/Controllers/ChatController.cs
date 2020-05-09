@@ -31,7 +31,8 @@ namespace Juno.Controllers
             chatParticipants.Add(new ChatParticipantViewModel()
             {
                 ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "auth0|5dcbcd3c1e0b6c0e8b05a5e2",
+                Id = "5FfGkM_QBhkO8jGRHddP5g",
+                Auth0Id = "auth0|5dcbcd3c1e0b6c0e8b05a5e2",
                 DisplayName = "Peter",
                 Avatar = "",
                 Status = 0
@@ -40,7 +41,8 @@ namespace Juno.Controllers
             chatParticipants.Add(new ChatParticipantViewModel()
             {
                 ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "auth0|5c62f8a596979e1735449127",
+                Id = "Lm7l7IsFvIACg6RRqRZKXg",
+                Auth0Id = "auth0|5c62f8a596979e1735449127",
                 DisplayName = "Kurt Hansen",
                 Avatar = "",
                 Status = 1
@@ -49,7 +51,8 @@ namespace Juno.Controllers
             chatParticipants.Add(new ChatParticipantViewModel()
             {
                 ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "1",
+                Id = "E7oelfGokauTlMWiw9RFSA",
+                Auth0Id = "auth0|5dcbu65c1e0b6c0e8bste5e2",
                 DisplayName = "Daenerys Targaryen",
                 Avatar = "",
                 Status = 2
@@ -71,11 +74,11 @@ namespace Juno.Controllers
 
             foreach (var friend in friends)
             {
-                //participantResponses.Add(new ParticipantResponseViewModel()
-                //{
-                //    Participant = friend,
-                //    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }
-                //});
+                participantResponses.Add(new ParticipantResponseViewModel()
+                {
+                    Participant = friend,
+                    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }
+                });
 
             }
 

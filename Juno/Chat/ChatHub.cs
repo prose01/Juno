@@ -33,23 +33,28 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
+
+                if (oldConnectedParticipants.Count() == 0)
                 {
-                    Metadata = new ParticipantMetadataViewModel()
+                    AllConnectedParticipants.Add(new ParticipantResponseViewModel()
                     {
-                        TotalUnreadMessages = 0
-                    },
-                    Participant = new ChatParticipantViewModel()
-                    {
-                        DisplayName = userName,
-                        Id = Context.ConnectionId,
-                        Auth0Id = Context.UserIdentifier
-                    }
-                });
+                        Metadata = new ParticipantMetadataViewModel()
+                        {
+                            TotalUnreadMessages = 0
+                        },
+                        Participant = new ChatParticipantViewModel()
+                        {
+                            DisplayName = userName,
+                            Id = Context.UserIdentifier,
+                            //Auth0Id = Context.UserIdentifier
+                        }
+                    });
+                }
 
                 // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                 // You should most likely use another ID on your application
-                Clients.Caller.SendAsync("generatedUserId", Context.ConnectionId);
+                Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
 
                 Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
             }
@@ -63,14 +68,16 @@ namespace Juno.Chat
             if (sender != null)
             {
                 // Set From Auth0Id
-                message.FromAuth0Id = Context.UserIdentifier;
+                //message.FromAuth0Id = Context.UserIdentifier;
 
                 // Set To Auth0Id
-                //message.ToAuth0Id = Context.UserIdentifier;
+                //message.ToAuth0Id = receiver.Participant.Auth0Id;
 
                 // Save to databaes
                 _helper.mockMessageHistorylist.Add(message);
-                Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                //Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+
+                Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
                 //Clients.All.SendAsync("messageReceived", sender.Participant, message);
             }
         }
@@ -79,7 +86,7 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.ConnectionId);
+                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
                 if (connectionIndex >= 0)
                 {
@@ -99,7 +106,9 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.ConnectionId);
+                Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
+
+                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
                 if (connectionIndex >= 0)
                 {
@@ -113,6 +122,6 @@ namespace Juno.Chat
 
                 return base.OnConnectedAsync();
             }
-        }       
+        }
     }
 }
