@@ -91,7 +91,7 @@ namespace Juno
             services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
 
             // Add our repository type(s)
-            services.AddSingleton<ICurrentUserRepository, CurrentUserRepository>();
+            services.AddSingleton<IProfilesRepository, ProfilesRepository>();
 
             // Add our helper method(s)
             services.AddSingleton<IHelperMethods, HelperMethods>();

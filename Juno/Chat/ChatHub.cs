@@ -46,8 +46,7 @@ namespace Juno.Chat
                         Participant = new ChatParticipantViewModel()
                         {
                             DisplayName = userName,
-                            Id = Context.UserIdentifier,
-                            //Auth0Id = Context.UserIdentifier
+                            Id = Context.UserIdentifier
                         }
                     });
                 }
@@ -63,22 +62,13 @@ namespace Juno.Chat
         public void SendMessage(MessageViewModel message)
         {
             var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
-            //var receiver = AllConnectedParticipants.Find(x => x.Participant.Id == message.ToId);
 
             if (sender != null)
             {
-                // Set From Auth0Id
-                //message.FromAuth0Id = Context.UserIdentifier;
-
-                // Set To Auth0Id
-                //message.ToAuth0Id = receiver.Participant.Auth0Id;
-
                 // Save to databaes
                 _helper.mockMessageHistorylist.Add(message);
-                //Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
 
                 Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
-                //Clients.All.SendAsync("messageReceived", sender.Participant, message);
             }
         }
 

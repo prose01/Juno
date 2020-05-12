@@ -1,5 +1,4 @@
-﻿using System;
-using Juno.Model;
+﻿using Juno.Model;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -17,5 +16,6 @@ namespace Juno.Data
         }
 
         public IMongoCollection<CurrentUser> CurrentUser => _database.GetCollection<CurrentUser>("Profile");
+        public IMongoCollection<Profile> Profiles => _database.GetCollection<Profile>("Profile");
     }
 }

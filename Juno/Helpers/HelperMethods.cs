@@ -11,11 +11,11 @@ namespace Juno.Helpers
 {
     public class HelperMethods : IHelperMethods
     {
-        private readonly ICurrentUserRepository _profileRepository;
+        private readonly IProfilesRepository _profileRepository;
         private readonly string _nameidentifier;
         public List<MessageViewModel> mockMessageHistorylist { get; set; }
 
-        public HelperMethods(IOptions<Settings> settings, ICurrentUserRepository profileRepository)
+        public HelperMethods(IProfilesRepository profileRepository, IOptions<Settings> settings)
         {
             _profileRepository = profileRepository;
             _nameidentifier = settings.Value.auth0Id;

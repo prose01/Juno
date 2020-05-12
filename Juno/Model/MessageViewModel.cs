@@ -7,8 +7,6 @@ namespace Juno.Model
         public int Type { get; set; }
         public string FromId { get; set; }
         public string ToId { get; set; }
-        public string FromAuth0Id { get; set; }
-        public string ToAuth0Id { get; set; }
         public string Message { get; set; }
         public DateTime? DateSent { get; set; }
         public DateTime? DateSeen { get; set; }

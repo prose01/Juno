@@ -15,64 +15,42 @@ namespace Juno.Controllers
     [ApiController]
     public class ChatController : Controller
     {
+        private readonly IProfilesRepository _profileRepository;
         private readonly IHelperMethods _helper;
 
-        public ChatController(IHelperMethods helperMethods)
+        public ChatController(IProfilesRepository profileRepository, IHelperMethods helperMethods)
         {
+            _profileRepository = profileRepository;
             _helper = helperMethods;
-        }
-
-        [NoCache]
-        [HttpPost("~/ListFriends")]
-        public async Task<IEnumerable<ChatParticipantViewModel>> ListFriends()
-        {
-            List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
-
-            chatParticipants.Add(new ChatParticipantViewModel()
-            {
-                ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "5FfGkM_QBhkO8jGRHddP5g",
-                Auth0Id = "auth0|5dcbcd3c1e0b6c0e8b05a5e2",
-                DisplayName = "Peter",
-                Avatar = "",
-                Status = 0
-            });
-
-            chatParticipants.Add(new ChatParticipantViewModel()
-            {
-                ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "Lm7l7IsFvIACg6RRqRZKXg",
-                Auth0Id = "auth0|5c62f8a596979e1735449127",
-                DisplayName = "Kurt Hansen",
-                Avatar = "",
-                Status = 1
-            });
-
-            chatParticipants.Add(new ChatParticipantViewModel()
-            {
-                ParticipantType = ChatParticipantTypeEnum.User,
-                Id = "E7oelfGokauTlMWiw9RFSA",
-                Auth0Id = "auth0|5dcbu65c1e0b6c0e8bste5e2",
-                DisplayName = "Daenerys Targaryen",
-                Avatar = "",
-                Status = 2
-            });
-
-            return chatParticipants;
         }
 
         [NoCache]
         [HttpPost("~/ParticipantResponses")]
         public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync()
         {
+            var currentUser = await _helper.GetCurrentUserProfile(User);
+
+            var bookmarkedProfiles = _profileRepository.GetBookmarkedProfiles(currentUser);
+
+            List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
+
+            if (bookmarkedProfiles.Result != null)
+            {
+                foreach (var profile in bookmarkedProfiles.Result)
+                {
+                    chatParticipants.Add(new ChatParticipantViewModel()
+                    {
+                        ParticipantType = ChatParticipantTypeEnum.User,
+                        Id = profile.Auth0Id,
+                        DisplayName = profile.Name,
+                        Avatar = ""
+                    });
+                }
+            }
 
             List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
-            //var currentUser = await _helper.GetCurrentUserProfile(User);
-
-            var friends = await this.ListFriends();
-
-            foreach (var friend in friends)
+            foreach (var friend in chatParticipants)
             {
                 participantResponses.Add(new ParticipantResponseViewModel()
                 {

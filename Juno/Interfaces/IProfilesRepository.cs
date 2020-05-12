@@ -1,11 +1,12 @@
 ﻿using Juno.Model;
-using MongoDB.Driver;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Juno.Interfaces
 {
-    public interface ICurrentUserRepository
+    public interface IProfilesRepository
     {
         Task<CurrentUser> GetCurrentProfileByAuth0Id(string auth0Id);
+        Task<IEnumerable<Profile>> GetBookmarkedProfiles(CurrentUser profile);
     }
 }
