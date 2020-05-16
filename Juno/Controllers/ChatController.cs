@@ -11,7 +11,7 @@ namespace Juno.Controllers
 {
     [Produces("application/json")]
     [Route("[controller]")]
-    //[Authorize]
+    [Authorize]
     [ApiController]
     public class ChatController : Controller
     {
@@ -65,14 +65,11 @@ namespace Juno.Controllers
 
         [NoCache]
         [HttpPost("~/MessageHistory")]
-        public async Task<IEnumerable<MessageViewModel>> MessageHistory()
+        public async Task<IEnumerable<MessageViewModel>> MessageHistory([FromBody] string destinataryId)
         {
-            //var currentUser = await _helper.GetCurrentUserProfile(User);
+            var currentUser = await _helper.GetCurrentUserProfile(User);
 
-            // Get from database
-            //List<MessageViewModel> messageHistory = this.mockMessageHistory();
-
-            return _helper.mockMessageHistorylist;
+            return await _profileRepository.GetMessages(currentUser.Auth0Id, destinataryId);
         }
     }
 }

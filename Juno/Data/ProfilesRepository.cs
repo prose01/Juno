@@ -44,7 +44,37 @@ namespace Juno.Data
         {
             try
             {
+                // TODO: Select just what's needed not entire Profile.
                 var query = _context.Profiles.Find(p => currentUser.Bookmarks.Contains(p.ProfileId));
+
+                return await Task.FromResult(query.ToList());
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task SaveMessage(MessageViewModel message)
+        {
+            try
+            {
+                await _context.Messages.InsertOneAsync(message);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<IEnumerable<MessageViewModel>> GetMessages(string currentUserAuth0Id, string auth0Id)
+        {
+            try
+            {
+                var query = from m in _context.Messages.AsQueryable()
+                            where (m.FromId == currentUserAuth0Id && m.ToId == auth0Id) || (m.FromId == auth0Id && m.ToId == currentUserAuth0Id)
+                            orderby m.DateSent descending
+                            select m;
 
                 return await Task.FromResult(query.ToList());
             }

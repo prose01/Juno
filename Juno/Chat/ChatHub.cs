@@ -12,14 +12,16 @@ namespace Juno.Chat
     [Authorize]
     public class ChatHub : Hub
     {
+        private readonly IProfilesRepository _profileRepository;
         private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
 
         private readonly IHelperMethods _helper;
 
-        public ChatHub(IHelperMethods helperMethod)
+        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod)
         {
+            _profileRepository = profileRepository;
             _helper = helperMethod;
         }
 
@@ -66,7 +68,8 @@ namespace Juno.Chat
             if (sender != null)
             {
                 // Save to databaes
-                _helper.mockMessageHistorylist.Add(message);
+                //_helper.mockMessageHistorylist.Add(message);
+                _profileRepository.SaveMessage(message);
 
                 Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
             }
