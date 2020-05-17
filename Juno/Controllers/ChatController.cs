@@ -30,13 +30,13 @@ namespace Juno.Controllers
         {
             var currentUser = await _helper.GetCurrentUserProfile(User);
 
-            var bookmarkedProfiles = _profileRepository.GetBookmarkedProfiles(currentUser);
+            var chatMember = _profileRepository.GetChatMemberslist(currentUser);
 
             List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
-            if (bookmarkedProfiles.Result != null)
+            if (chatMember.Result != null)
             {
-                foreach (var profile in bookmarkedProfiles.Result)
+                foreach (var profile in chatMember.Result)
                 {
                     chatParticipants.Add(new ChatParticipantViewModel()
                     {

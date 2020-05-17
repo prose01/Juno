@@ -28,7 +28,7 @@ namespace Juno.Helpers
             var auth0Id = user.Claims.FirstOrDefault(c => c.Type == _nameidentifier)?.Value;
 
             // TODO: Select just what's needed not entire Profile.
-            return await _profileRepository.GetCurrentProfileByAuth0Id(auth0Id) ?? new CurrentUser(); // Burde smide en fejl hvis bruger ikke findes.
+            return await _profileRepository.GetCurrentProfileByAuth0Id(auth0Id) ?? new CurrentUser(); // TODO: Burde smide en fejl hvis bruger ikke findes.
         }
     }
 }

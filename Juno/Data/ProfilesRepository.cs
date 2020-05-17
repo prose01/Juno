@@ -37,15 +37,15 @@ namespace Juno.Data
             }
         }
 
-        /// <summary>Gets the bookmarked profiles.</summary>
+        /// <summary>Get profiles on the ChatMemberslist.</summary>
         /// <param name="currentUser">The current user.</param>
         /// <returns></returns>
-        public async Task<IEnumerable<Profile>> GetBookmarkedProfiles(CurrentUser currentUser)
+        public async Task<IEnumerable<Profile>> GetChatMemberslist(CurrentUser currentUser)
         {
             try
             {
-                // TODO: Select just what's needed not entire Profile.
-                var query = _context.Profiles.Find(p => currentUser.Bookmarks.Contains(p.ProfileId));
+                // TODO: Select just what's needed not entire Profile. Auth=Id, ProfileID, ChatMemberslist
+                var query = _context.Profiles.Find(p => currentUser.ChatMemberslist.Contains(p.ProfileId));
 
                 return await Task.FromResult(query.ToList());
             }
@@ -60,6 +60,38 @@ namespace Juno.Data
             try
             {
                 await _context.Messages.InsertOneAsync(message);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task NotifyNewChatMember(string currentUserAuth0Id, string destinataryAuth0Id)
+        {
+            try
+            {
+                var currentUser = await GetCurrentProfileByAuth0Id(currentUserAuth0Id);
+
+                var filter = Builders<Profile>
+                            .Filter.Eq(e => e.Auth0Id, destinataryAuth0Id);
+
+                var destinataryProfile = await _context.Profiles
+                        .Find(filter)
+                        .FirstOrDefaultAsync();
+                
+                if (!destinataryProfile.ChatMemberslist.Contains(currentUser.ProfileId))
+                {
+                    var update = Builders<Profile>
+                                    .Update.Push(e => e.ChatMemberslist, currentUser.ProfileId);
+
+                    var options = new FindOneAndUpdateOptions<Profile>
+                    {
+                        ReturnDocument = ReturnDocument.After
+                    };
+
+                    await _context.Profiles.FindOneAndUpdateAsync(filter, update, options);
+                }
             }
             catch (Exception ex)
             {

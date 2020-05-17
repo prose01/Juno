@@ -67,9 +67,8 @@ namespace Juno.Chat
 
             if (sender != null)
             {
-                // Save to databaes
-                //_helper.mockMessageHistorylist.Add(message);
                 _profileRepository.SaveMessage(message);
+                _profileRepository.NotifyNewChatMember(Context.UserIdentifier, message.ToId); 
 
                 Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
             }
