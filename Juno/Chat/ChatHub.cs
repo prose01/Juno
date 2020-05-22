@@ -61,16 +61,23 @@ namespace Juno.Chat
             }
         }
 
-        public void SendMessage(MessageViewModel message)
+        public async Task SendMessage(MessageViewModel message)
         {
             var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
             if (sender != null)
             {
-                _profileRepository.SaveMessage(message);
-                _profileRepository.NotifyNewChatMember(Context.UserIdentifier, message.ToId); 
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
+                var currentUser = await _profileRepository.GetCurrentProfileByAuth0Id(Context.UserIdentifier);
 
-                Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked == true))
+                {
+                    await _profileRepository.SaveMessage(message);
+                    await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
+
+                    await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                }
             }
         }
 

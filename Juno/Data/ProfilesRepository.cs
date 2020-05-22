@@ -37,6 +37,25 @@ namespace Juno.Data
             }
         }
 
+        /// <summary>Gets the current profile by auth0Id.</summary>
+        /// <param name="auth0Id">The Auth0Id.</param>
+        /// <returns></returns>
+        public async Task<Profile> GetDestinataryProfileByAuth0Id(string auth0Id)
+        {
+            var filter = Builders<Profile>.Filter.Eq("Auth0Id", auth0Id);
+
+            try
+            {
+                return await _context.Profiles
+                    .Find(filter)
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         /// <summary>Get profiles on the ChatMemberslist.</summary>
         /// <param name="currentUser">The current user.</param>
         /// <returns></returns>
@@ -45,7 +64,8 @@ namespace Juno.Data
             try
             {
                 // TODO: Select just what's needed not entire Profile. Auth=Id, ProfileID, ChatMemberslist
-                var query = _context.Profiles.Find(p => currentUser.ChatMemberslist.Contains(p.ProfileId));
+                var memberslist = (currentUser.ChatMemberslist.Where(member => !member.Blocked).Select(member => member.ProfileId)).ToList();
+                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId));
 
                 return await Task.FromResult(query.ToList());
             }
@@ -80,10 +100,10 @@ namespace Juno.Data
                         .Find(filter)
                         .FirstOrDefaultAsync();
                 
-                if (!destinataryProfile.ChatMemberslist.Contains(currentUser.ProfileId))
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId))
                 {
                     var update = Builders<Profile>
-                                    .Update.Push(e => e.ChatMemberslist, currentUser.ProfileId);
+                                    .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUser.ProfileId, Blocked = false });
 
                     var options = new FindOneAndUpdateOptions<Profile>
                     {

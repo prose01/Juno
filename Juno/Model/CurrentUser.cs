@@ -8,7 +8,7 @@ namespace Juno.Model
     {
         #region special properties
         public List<string> Bookmarks { get; set; } // Remember to initiate the list when new user is created!!! 
-        public List<string> ChatMemberslist { get; set; } // TODO: Remember to initiate the list when new user is created!!! 
+        public List<ChatMember> ChatMemberslist { get; set; } // TODO: Remember to initiate the list when new user is created!!! 
 
         #endregion
 
