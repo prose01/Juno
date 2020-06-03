@@ -1,40 +1,35 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 
 namespace Juno.Model
 {
-    public class CurrentUser : AbstractProfile
+    public class ProfileFilter
     {
         #region special properties
-        public List<string> Bookmarks { get; set; } // Remember to initiate the list when new user is created!!! 
-        public List<ChatMember> ChatMemberslist { get; set; } // TODO: Remember to initiate the list when new user is created!!! 
-
-        public ProfileFilter ProfileFilter { get; set; }
+        public string CurrentUserId { get; set; }
 
         #endregion
 
-        public override ObjectId _id { get; set; }
-        public override string Auth0Id { get; set; }
-        public override string ProfileId { get; set; }
-        public override bool Admin { get; set; } = false;
-        public override string Name { get; set; }
-        public override DateTime CreatedOn { get; set; } = DateTime.Now;
-        public override DateTime UpdatedOn { get; set; } = DateTime.Now;
-        public override DateTime LastActive { get; set; } = DateTime.Now;
-        public override int? Age { get; set; } = null;
-        public override int? Height { get; set; }
-        public override int? Weight { get; set; }
-        public override string Description { get; set; }
-        public override List<ImageModel> Images { get; set; }
+        public string Name { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public DateTime UpdatedOn { get; set; }
+        public DateTime LastActive { get; set; }
+        public List<int?> Age { get; set; }
+        public List<int?> Height { get; set; }
+        public List<int?> Weight { get; set; }
+        public string Description { get; set; }
 
         //public override string[] Tags { get; set; }
 
         //public override string JobTitle { get; set; } = string.Empty;
 
-        public override GenderType Gender { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public GenderType Gender { get; set; }
 
-        public override BodyType Body { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public BodyType Body { get; set; }
 
         //[BsonRepresentation(BsonType.String)]
         //public override SmokingHabitsType SmokingHabits { get; set; }
