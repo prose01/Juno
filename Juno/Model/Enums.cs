@@ -78,6 +78,14 @@ namespace Juno.Model
     {
     }
 
+    public enum SexualOrientationType
+    {
+        Heterosexual,
+        Homosexual,
+        Bisexual,
+        Asexual
+    }
+
     public enum SmokingHabitsType
     {
         [EnumMember(Value = "Non Smoker")]

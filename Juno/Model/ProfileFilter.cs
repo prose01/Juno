@@ -27,6 +27,7 @@ namespace Juno.Model
 
         [BsonRepresentation(BsonType.String)]
         public GenderType Gender { get; set; }
+        public SexualOrientationType SexualOrientation { get; set; }
 
         [BsonRepresentation(BsonType.String)]
         public BodyType Body { get; set; }

@@ -45,6 +45,7 @@ namespace Juno.Model
         [BsonRepresentation(BsonType.String)]
         [EnumDataType(typeof(GenderType))]
         public abstract GenderType Gender { get; set; }
+        public abstract SexualOrientationType SexualOrientation { get; set; }
 
         [BsonRepresentation(BsonType.String)]
         public abstract BodyType Body { get; set; }
