@@ -68,10 +68,10 @@ namespace Juno.Chat
             if (sender != null)
             {
                 var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
-                var currentUser = await _profileRepository.GetCurrentProfileByAuth0Id(Context.UserIdentifier);
+                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
 
                 // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked == true))
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked == true))
                 {
                     await _profileRepository.SaveMessage(message);
                     await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);

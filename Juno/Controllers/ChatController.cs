@@ -28,9 +28,9 @@ namespace Juno.Controllers
         [HttpPost("~/ParticipantResponses")]
         public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync()
         {
-            var currentUser = await _helper.GetCurrentUserProfile(User);
+            var auth0Id = _helper.GetCurrentUserProfile(User);
 
-            var chatMember = _profileRepository.GetChatMemberslist(currentUser);
+            var chatMember = _profileRepository.GetChatMemberslist(auth0Id);
 
             List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
@@ -67,9 +67,9 @@ namespace Juno.Controllers
         [HttpPost("~/MessageHistory")]
         public async Task<IEnumerable<MessageViewModel>> MessageHistory([FromBody] string destinataryId)
         {
-            var currentUser = await _helper.GetCurrentUserProfile(User);
+            var auth0Id = _helper.GetCurrentUserProfile(User);
 
-            return await _profileRepository.GetMessages(currentUser.Auth0Id, destinataryId);
+            return await _profileRepository.GetMessages(auth0Id, destinataryId);
         }
     }
 }
