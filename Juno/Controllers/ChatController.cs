@@ -17,11 +17,13 @@ namespace Juno.Controllers
     {
         private readonly IProfilesRepository _profileRepository;
         private readonly IHelperMethods _helper;
+        private readonly ICryptography _cryptography;
 
-        public ChatController(IProfilesRepository profileRepository, IHelperMethods helperMethods)
+        public ChatController(IProfilesRepository profileRepository, IHelperMethods helperMethods, ICryptography cryptography)
         {
             _profileRepository = profileRepository;
             _helper = helperMethods;
+            _cryptography = cryptography;
         }
 
         [NoCache]
@@ -69,7 +71,14 @@ namespace Juno.Controllers
         {
             var auth0Id = _helper.GetCurrentUserProfile(User);
 
-            return await _profileRepository.GetMessages(auth0Id, destinataryId);
+            var messages = await _profileRepository.GetMessages(auth0Id, destinataryId);
+
+            foreach(var message in messages)
+            {
+                message.Message = _cryptography.Decrypt(message.Message);
+            }
+
+            return messages;
         }
     }
 }

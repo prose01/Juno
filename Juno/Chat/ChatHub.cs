@@ -18,11 +18,13 @@ namespace Juno.Chat
         private object ParticipantsConnectionLock = new object();
 
         private readonly IHelperMethods _helper;
+        private readonly ICryptography _cryptography;
 
-        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod)
+        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod, ICryptography cryptography)
         {
             _profileRepository = profileRepository;
             _helper = helperMethod;
+            _cryptography = cryptography;
         }
 
         public static IEnumerable<ParticipantResponseViewModel> ConnectedParticipants(string currentUserId)
@@ -73,6 +75,9 @@ namespace Juno.Chat
                 // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked == true))
                 {
+                    var encryptedMessage = _cryptography.Encrypt(message.Message);
+                    message.Message = encryptedMessage;
+
                     await _profileRepository.SaveMessage(message);
                     await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
 

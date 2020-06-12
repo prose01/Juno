@@ -94,6 +94,7 @@ namespace Juno
             services.AddSingleton<IProfilesRepository, ProfilesRepository>();
 
             // Add our helper method(s)
+            services.AddSingleton<ICryptography, Cryptography>();
             services.AddSingleton<IHelperMethods, HelperMethods>();
             services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
