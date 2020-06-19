@@ -2,27 +2,37 @@
 
 namespace Juno.Model
 {
-    public enum AllergiesType
-    {
-        Yes,
-        No
-    }
+    //public enum AllergiesType  // Boolean
+    //{
+    //    Yes,
+    //    No
+    //}
 
     public enum ClotheStyleType
     {
+        NotChosen,
+        Casual,
+        Dressy,
+        Dandy,
+        Stylish,
+        Formal,
+        Other
     }
 
     public enum BodyType
     {
-        Atletic,
+        NotChosen,
+        Atlethic,
         Chubby,
         Normal,
         Robust,
-        Slim
+        Slim,
+        Other
     }
 
     public enum BodyArtType
     {
+        NotChosen,
         Piercing,
         Tatoo,
         Other
@@ -36,47 +46,79 @@ namespace Juno.Model
 
     public enum EatingHabitsType
     {
+        NotChosen,
         Healthy,
         Gastronomic,
         Normal,
         Kosher,
         Organic,
         Traditional,
-        Vegetarian
+        Vegetarian,
+        Other
     }
 
     public enum EducationLevelType
     {
+        NotChosen,
+        Bachelor,
+        Master,
+        Phd,
+        Other
     }
 
     public enum EducationStatusType
     {
+        NotChosen,
         Graduated,
-        Student
+        Student,
+        Other
     }
 
     public enum EducationType
     {
+        NotChosen,
+        School,
+        Highschool,
+        University,
+        Other
     }
-    public enum EmploymentLevelType
-    {
-    }
+    //public enum EmploymentLevelType
+    //{
+    //    NotChosen,
+    //    Other
+    //}
 
-    public enum EmploymentAreaType
-    {
-    }
+    //public enum EmploymentAreaType
+    //{
+    //    NotChosen,
+    //    Other
+    //}
 
     public enum EmploymentStatusType
     {
+        NotChosen,
+        Unemployed,
+        Employed,
+        SelfEmployed,
+        Other
     }
 
     public enum LocationType
     {
+        NotChosen,
+        City,
+        Suburb,
+        Countryside,
+        Other
     }
 
-    public enum PoliticalOrientationType
-    {
-    }
+    //public enum PoliticalOrientationType
+    //{
+    //}
+
+    //public enum ReligiousOrientationType
+    //{
+    //}
 
     public enum SexualOrientationType
     {
@@ -88,19 +130,30 @@ namespace Juno.Model
 
     public enum SmokingHabitsType
     {
-        [EnumMember(Value = "Non Smoker")]
+        NotChosen,
         NonSmoker,
-        Occationally,
-        Smoker
+        OccasionalSmoker,
+        Smoker,
+        Other
     }
 
-    public enum SportType
+    public enum SportsActivityType
     {
+        NotChosen,
+        Regularly,
+        SomeRegularity,
+        Seldom,
+        Never,
+        Other
     }
 
-    public enum WantChildrenType
+    public enum MaritalStatusType
     {
-        Yes,
-        No
+        NotChosen,
+        Single,
+        Married,
+        Separated,
+        Divorced,
+        Other
     }
 }

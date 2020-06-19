@@ -28,10 +28,10 @@ namespace Juno.Model
         [Range(0, 120)]
         public abstract int? Age { get; set; }
 
-        [Range(0, 220)]
+        [Range(0, 250)]
         public abstract int? Height { get; set; }
 
-        [Range(0, 200)]
+        [Range(0, 300)]  // Might not
         public abstract int? Weight { get; set; }
 
         [StringLength(2000, ErrorMessage = "Description length cannot be more than 2000.")]
@@ -43,39 +43,41 @@ namespace Juno.Model
         //public abstract string JobTitle { get; set; }
 
         [BsonRepresentation(BsonType.String)]
-        [EnumDataType(typeof(GenderType))]
+        //[EnumDataType(typeof(GenderType))]
         public abstract GenderType Gender { get; set; }
-        public abstract SexualOrientationType SexualOrientation { get; set; }
+
+        [BsonRepresentation(BsonType.String)]
+        public abstract SexualOrientationType SexualOrientation { get; set; } // TODO: Should this be encrypted?
 
         [BsonRepresentation(BsonType.String)]
         public abstract BodyType Body { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract SmokingHabitsType SmokingHabits { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract SmokingHabitsType SmokingHabits { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
+        //[BsonRepresentation(BsonType.String)]  // Maybe not
         //public abstract AllergiesType Allergies { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract bool HasChildren { get; set; }
+        public abstract bool HasChildren { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract WantChildrenType WantChildren { get; set; }
+        public abstract bool WantChildren { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract LocationType LivesIn { get; set; }
+        public abstract bool HasPets { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract EducationType EducationArea { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract LocationType LivesIn { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract EducationStatusType EducationStatus { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract EducationType Education { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract EducationLevelType EducationLevel { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract EducationStatusType EducationStatus { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract EmploymentStatusType EmploymentStatus { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract EducationLevelType EducationLevel { get; set; }
+
+        [BsonRepresentation(BsonType.String)]
+        public abstract EmploymentStatusType EmploymentStatus { get; set; }
 
         //[BsonRepresentation(BsonType.String)]
         //public abstract EmploymentAreaType EmploymentArea { get; set; }
@@ -83,19 +85,22 @@ namespace Juno.Model
         //[BsonRepresentation(BsonType.String)]
         //public abstract EmploymentLevelType EmploymentLevel { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
+        //[BsonRepresentation(BsonType.String)] //Maybe not
         //public abstract PoliticalOrientationType PoliticalOrientation { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract SportType Sport { get; set; }
+        //[BsonRepresentation(BsonType.String)] //Maybe not
+        //public abstract ReligiousOrientationType ReligiousOrientation { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract EatingHabitsType EatingHabits { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract SportsActivityType SportsActivity { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract ClotheStyleType ClotheStyle { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract EatingHabitsType EatingHabits { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
-        //public abstract BodyArtType BodyArt { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public abstract ClotheStyleType ClotheStyle { get; set; }
+
+        [BsonRepresentation(BsonType.String)]
+        public abstract BodyArtType BodyArt { get; set; }
     }
 }
