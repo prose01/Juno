@@ -103,6 +103,30 @@ namespace Juno.Model
         Other
     }
 
+    public enum HasChildrenType
+    {
+        NotChosen,
+        Yes,
+        No,
+        Other
+    }
+
+    public enum WantChildrenType
+    {
+        NotChosen,
+        Yes,
+        No,
+        Other
+    }
+
+    public enum HasPetsType
+    {
+        NotChosen,
+        Yes,
+        No,
+        Other
+    }
+
     public enum LocationType
     {
         NotChosen,
