@@ -36,10 +36,8 @@ namespace Juno.Model
         public override GenderType Gender { get; set; }
         public override SexualOrientationType SexualOrientation { get; set; } // TODO: Should this be encrypted?
 
-        //[BsonRepresentation(BsonType.String)]
         public override BodyType Body { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override SmokingHabitsType SmokingHabits { get; set; }
 
         //[BsonRepresentation(BsonType.String)]  // Maybe not
@@ -51,19 +49,14 @@ namespace Juno.Model
 
         public override HasPetsType HasPets { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override LocationType LivesIn { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override EducationType Education { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override EducationStatusType EducationStatus { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override EducationLevelType EducationLevel { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override EmploymentStatusType EmploymentStatus { get; set; }
 
         //[BsonRepresentation(BsonType.String)]
@@ -78,16 +71,12 @@ namespace Juno.Model
         //[BsonRepresentation(BsonType.String)] //Maybe not
         //public abstract ReligiousOrientationType ReligiousOrientation { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override SportsActivityType SportsActivity { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override EatingHabitsType EatingHabits { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override ClotheStyleType ClotheStyle { get; set; }
 
-        //[BsonRepresentation(BsonType.String)]
         public override BodyArtType BodyArt { get; set; }
     }
 }
