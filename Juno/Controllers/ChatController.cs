@@ -57,7 +57,7 @@ namespace Juno.Controllers
                 participantResponses.Add(new ParticipantResponseViewModel()
                 {
                     Participant = friend,
-                    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }
+                    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }       // TODO: set number of unread messages.
                 });
 
             }
