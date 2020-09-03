@@ -80,5 +80,27 @@ namespace Juno.Controllers
 
             return messages;
         }
+
+        #region Maintenance
+
+        /// <summary>Deletes Message that are more than 30 days old.</summary>
+        /// <returns></returns>
+        [NoCache]
+        [HttpDelete("~/DeleteOldMessages")]
+        public async Task<IActionResult> DeleteOldMessages()
+        {
+            try
+            {
+                //var oldMessages = await _profileRepository.DeleteOldMessages(); // TODO: Needs to be testet.
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        #endregion
     }
 }

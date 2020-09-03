@@ -165,5 +165,34 @@ namespace Juno.Data
                 throw ex;
             }
         }
+
+
+        #region Maintenance
+
+        /// <summary>Deletes Message that are more than 30 days old.</summary>
+        /// <returns></returns>
+        public async Task<DeleteResult> DeleteOldMessages()
+        {
+            try
+            {
+                var filter = Builders<MessageViewModel>
+                            .Filter.Lt(m => m.DateSent, DateTime.Now.AddDays(-30));
+
+                try
+                {
+                    return await _context.Messages.DeleteManyAsync(filter);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        #endregion
     }
 }
