@@ -2,12 +2,6 @@
 
 namespace Juno.Model
 {
-    //public enum AllergiesType  // Boolean
-    //{
-    //    Yes,
-    //    No
-    //}
-
     public enum ClotheStyleType
     {
         NotChosen,
@@ -57,15 +51,6 @@ namespace Juno.Model
         Other
     }
 
-    public enum EducationLevelType
-    {
-        NotChosen,
-        Bachelor,
-        Master,
-        Phd,
-        Other
-    }
-
     public enum EducationStatusType
     {
         NotChosen,
@@ -82,17 +67,6 @@ namespace Juno.Model
         University,
         Other
     }
-    //public enum EmploymentLevelType
-    //{
-    //    NotChosen,
-    //    Other
-    //}
-
-    //public enum EmploymentAreaType
-    //{
-    //    NotChosen,
-    //    Other
-    //}
 
     public enum EmploymentStatusType
     {
@@ -135,14 +109,6 @@ namespace Juno.Model
         Countryside,
         Other
     }
-
-    //public enum PoliticalOrientationType
-    //{
-    //}
-
-    //public enum ReligiousOrientationType
-    //{
-    //}
 
     public enum SexualOrientationType
     {
