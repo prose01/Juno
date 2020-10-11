@@ -35,9 +35,8 @@ namespace Juno.Model
         public abstract string Description { get; set; }
         public abstract List<ImageModel> Images { get; set; }
 
-        //public abstract string[] Tags { get; set; }
-
-        //public abstract string JobTitle { get; set; }
+        [MaxLength(10)]
+        public abstract List<string> Tags { get; set; }
 
         [BsonRepresentation(BsonType.String)]
         public abstract GenderType Gender { get; set; }
