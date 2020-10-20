@@ -23,15 +23,8 @@ namespace Juno.Data
         /// <returns></returns>
         public async Task<string> GetCurrentProfileIdByAuth0Id(string auth0Id)
         {
-            //var filter = Builders<CurrentUser>.Filter.Eq("Auth0Id", auth0Id);
-
             try
             {
-                //return await _context.CurrentUser
-                //    .Find(filter)
-                //    .FirstOrDefaultAsync();
-
-
                 var query = from p in _context.CurrentUser.AsQueryable()
                             where p.Auth0Id == auth0Id
                             select new { p.ProfileId };
