@@ -1,4 +1,6 @@
-﻿using Juno.Model;
+﻿using Juno.Interfaces;
+using Juno.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -7,11 +9,23 @@ using System.Threading.Tasks;
 
 namespace Juno.Chat
 {
+    [Authorize]
     public class ChatHub : Hub
     {
+        private readonly IProfilesRepository _profileRepository;
         private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
+
+        private readonly IHelperMethods _helper;
+        private readonly ICryptography _cryptography;
+
+        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod, ICryptography cryptography)
+        {
+            _profileRepository = profileRepository;
+            _helper = helperMethod;
+            _cryptography = cryptography;
+        }
 
         public static IEnumerable<ParticipantResponseViewModel> ConnectedParticipants(string currentUserId)
         {
@@ -23,34 +37,52 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
+
+                if (oldConnectedParticipants.Count() == 0)
                 {
-                    Metadata = new ParticipantMetadataViewModel()
+                    AllConnectedParticipants.Add(new ParticipantResponseViewModel()
                     {
-                        TotalUnreadMessages = 0
-                    },
-                    Participant = new ChatParticipantViewModel()
-                    {
-                        DisplayName = userName,
-                        Id = Context.ConnectionId
-                    }
-                });
+                        Metadata = new ParticipantMetadataViewModel()
+                        {
+                            TotalUnreadMessages = 0
+                        },
+                        Participant = new ChatParticipantViewModel()
+                        {
+                            DisplayName = userName,
+                            Id = Context.UserIdentifier
+                        }
+                    });
+                }
 
                 // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                 // You should most likely use another ID on your application
-                Clients.Caller.SendAsync("generatedUserId", Context.ConnectionId);
+                Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
 
                 Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
             }
         }
 
-        public void SendMessage(MessageViewModel message)
+        public async Task SendMessage(MessageViewModel message)
         {
             var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
             if (sender != null)
             {
-                Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
+                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
+
+                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked == true))
+                {
+                    var encryptedMessage = _cryptography.Encrypt(message.Message);
+                    message.Message = encryptedMessage;
+
+                    await _profileRepository.SaveMessage(message);
+                    await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
+
+                    await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                }
             }
         }
 
@@ -58,7 +90,7 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.ConnectionId);
+                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
                 if (connectionIndex >= 0)
                 {
@@ -78,7 +110,9 @@ namespace Juno.Chat
         {
             lock (ParticipantsConnectionLock)
             {
-                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.ConnectionId);
+                Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
+
+                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
                 if (connectionIndex >= 0)
                 {
