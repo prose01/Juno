@@ -153,12 +153,12 @@ namespace Juno
 
             // Shows UseCors with CorsPolicyBuilder.
             // Remember to remove Cors for production.
-            app.UseCors(builder =>
-                builder.WithOrigins("http://localhost:4200")
-                    .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
-                    .AllowAnyHeader()
-                    .AllowCredentials()
-            );
+            //app.UseCors(builder =>
+            //    builder.WithOrigins("http://localhost:4200")
+            //        .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
+            //        .AllowAnyHeader()
+            //        .AllowCredentials()
+            //);
 
             app.UseHttpsRedirection();
             
