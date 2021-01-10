@@ -37,15 +37,15 @@ namespace Juno
         public void ConfigureServices(IServiceCollection services)
         {
             // Add service and create Policy with options
-            services.AddCors(options =>
-            {
-                options.AddPolicy("CorsPolicy",
-                    builder => builder
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                    );
-            });
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("CorsPolicy",
+            //        builder => builder
+            //            .AllowAnyOrigin()
+            //            .AllowAnyMethod()
+            //            .AllowAnyHeader()
+            //        );
+            //});
 
             // Add framework services.
             services.AddMvc().AddJsonOptions(options => {
