@@ -10,6 +10,8 @@ namespace Juno.Model
         public List<string> Bookmarks { get; set; }
         public List<ChatMember> ChatMemberslist { get; set; }
         public ProfileFilter ProfileFilter { get; set; }
+        public override Dictionary<string, DateTime> Visited { get; set; }
+        public override Dictionary<string, DateTime> IsBookmarked { get; set; }
         #endregion
 
         public override ObjectId _id { get; set; }
@@ -22,6 +24,7 @@ namespace Juno.Model
         public override DateTime LastActive { get; set; } = DateTime.Now;
         public override int? Age { get; set; } = null;
         public override int? Height { get; set; }
+        public override bool Contactable { get; set; } = true;
         public override string Description { get; set; }
         public override List<ImageModel> Images { get; set; }
         public override List<string> Tags { get; set; }
@@ -32,7 +35,7 @@ namespace Juno.Model
         public override HasChildrenType HasChildren { get; set; }
         public override WantChildrenType WantChildren { get; set; }
         public override HasPetsType HasPets { get; set; }
-        public override LocationType LivesIn { get; set; }
+        public override LivesInType LivesIn { get; set; }
         public override EducationType Education { get; set; }
         public override EducationStatusType EducationStatus { get; set; }
         public override EmploymentStatusType EmploymentStatus { get; set; }

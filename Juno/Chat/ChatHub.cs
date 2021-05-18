@@ -12,6 +12,10 @@ namespace Juno.Chat
     [Authorize]
     public class ChatHub : Hub
     {
+        /// TODO: Kig på https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client
+        /// https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0
+        /// 
+
         private readonly IProfilesRepository _profileRepository;
         private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();

@@ -37,15 +37,15 @@ namespace Juno
         public void ConfigureServices(IServiceCollection services)
         {
             // Add service and create Policy with options
-            services.AddCors(options =>
-            {
-                options.AddPolicy("CorsPolicy",
-                    builder => builder
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                    );
-            });
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("CorsPolicy",
+            //        builder => builder
+            //            .AllowAnyOrigin()
+            //            .AllowAnyMethod()
+            //            .AllowAnyHeader()
+            //        );
+            //});
 
             // Add framework services.
             services.AddMvc().AddJsonOptions(options => {
@@ -57,7 +57,7 @@ namespace Juno
                 .AddSignalR();
 
             // Add authentication.
-            string domain = $"https://{Configuration["Auth0:Domain"]}/";
+            string domain = $"https://{Configuration["Auth0_Domain"]}/";
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -66,7 +66,7 @@ namespace Juno
             }).AddJwtBearer(options =>
             {
                 options.Authority = domain;
-                options.Audience = Configuration["Auth0:ApiIdentifier"];
+                options.Audience = Configuration["Auth0_ApiIdentifier"];
 
                 options.Events = new JwtBearerEvents
                 {
@@ -132,9 +132,9 @@ namespace Juno
 
             services.Configure<Settings>(options =>
             {
-                options.ConnectionString = Configuration.GetSection("MongoConnection:ConnectionString").Value;
-                options.Database = Configuration.GetSection("MongoConnection:Database").Value;
-                options.auth0Id = Configuration.GetSection("Auth0:Claims-nameidentifier").Value;
+                options.ConnectionString = Configuration.GetSection("Mongo_ConnectionString").Value;
+                options.Database = Configuration.GetSection("Mongo_Database").Value;
+                options.auth0Id = Configuration.GetSection("Auth0_Claims_nameidentifier").Value;
             });
 
             services.AddControllers();
@@ -153,12 +153,12 @@ namespace Juno
 
             // Shows UseCors with CorsPolicyBuilder.
             // Remember to remove Cors for production.
-            app.UseCors(builder =>
-                builder.WithOrigins("http://localhost:4200")
-                    .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
-                    .AllowAnyHeader()
-                    .AllowCredentials()
-            );
+            //app.UseCors(builder =>
+            //    builder.WithOrigins("http://localhost:4200")
+            //        .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
+            //        .AllowAnyHeader()
+            //        .AllowCredentials()
+            //);
 
             app.UseHttpsRedirection();
             
