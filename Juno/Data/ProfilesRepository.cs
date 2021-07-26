@@ -40,7 +40,7 @@ namespace Juno.Data
         /// <summary>Gets the current profile by auth0Id.</summary>
         /// <param name="auth0Id">The Auth0Id.</param>
         /// <returns></returns>
-        public async Task<Profile> GetDestinataryProfileByAuth0Id(string auth0Id)
+        public async Task<Profile> GetDestinataryProfileByAuth0Id(string auth0Id)       // TODO: Change to use ProfileId instead!
         {
             var filter = Builders<Profile>.Filter.Eq("Auth0Id", auth0Id);
 

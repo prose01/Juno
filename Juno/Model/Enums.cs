@@ -1,13 +1,5 @@
-﻿using System.Runtime.Serialization;
-
-namespace Juno.Model
+﻿namespace Juno.Model
 {
-    //public enum AllergiesType  // Boolean
-    //{
-    //    Yes,
-    //    No
-    //}
-
     public enum ClotheStyleType
     {
         NotChosen,
@@ -73,17 +65,6 @@ namespace Juno.Model
         University,
         Other
     }
-    //public enum EmploymentLevelType
-    //{
-    //    NotChosen,
-    //    Other
-    //}
-
-    //public enum EmploymentAreaType
-    //{
-    //    NotChosen,
-    //    Other
-    //}
 
     public enum EmploymentStatusType
     {
@@ -126,14 +107,6 @@ namespace Juno.Model
         Countryside,
         Other
     }
-
-    //public enum PoliticalOrientationType
-    //{
-    //}
-
-    //public enum ReligiousOrientationType
-    //{
-    //}
 
     public enum SexualOrientationType
     {
