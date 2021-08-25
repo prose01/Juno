@@ -15,6 +15,7 @@ namespace Juno.Model
         [BsonRepresentation(BsonType.String)]
         internal GenderType Gender { get; set; }
 
+        public string Languagecode { private get; set; }
         public List<string> Bookmarks { private get; set; }
         public List<ChatMember> ChatMemberslist { internal get; set; }
         public ProfileFilter ProfileFilter { private get; set; }
@@ -31,6 +32,7 @@ namespace Juno.Model
         public override DateTime CreatedOn { get; set; }
         public override DateTime UpdatedOn { get; set; }
         public override DateTime LastActive { get; set; }
+        public override string Countrycode { get; set; }
         public override int? Age { get; set; } = null;
         public override int? Height { get; set; }
         public override bool Contactable { get; set; } = true;
