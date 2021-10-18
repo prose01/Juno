@@ -7,6 +7,6 @@ namespace Juno.Interfaces
     public interface IHelperMethods
     {
         string GetCurrentUserProfile(ClaimsPrincipal user);
-        List<MessageViewModel> mockMessageHistorylist { get; set; }
+        List<MessageModel> mockMessageHistorylist { get; set; }
     }
 }

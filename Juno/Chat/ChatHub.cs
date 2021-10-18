@@ -39,96 +39,124 @@ namespace Juno.Chat
 
         public void Join(string userName)
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (oldConnectedParticipants.Count() == 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
+
+                    if (oldConnectedParticipants.Count() == 0)
                     {
-                        Metadata = new ParticipantMetadataViewModel()
+                        AllConnectedParticipants.Add(new ParticipantResponseViewModel()
                         {
-                            TotalUnreadMessages = 0
-                        },
-                        Participant = new ChatParticipantViewModel()
-                        {
-                            DisplayName = userName,
-                            Id = Context.UserIdentifier
-                        }
-                    });
+                            Metadata = new ParticipantMetadataViewModel()
+                            {
+                                TotalUnreadMessages = 0
+                            },
+                            Participant = new ChatParticipantViewModel()
+                            {
+                                DisplayName = userName,
+                                Id = Context.UserIdentifier
+                            }
+                        });
+                    }
+
+                    // This will be used as the user's unique ID to be used on ng-chat as the connected user.
+                    // You should most likely use another ID on your application
+                    Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
+
+                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                 }
-
-                // This will be used as the user's unique ID to be used on ng-chat as the connected user.
-                // You should most likely use another ID on your application
-                Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
-
-                Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
-        public async Task SendMessage(MessageViewModel message)
+        public async Task SendMessage(MessageModel message)
         {
-            var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
-
-            if (sender != null)
+            try
             {
-                var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
-                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
+                var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
-                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked == true))
+                if (sender != null)
                 {
-                    var encryptedMessage = _cryptography.Encrypt(message.Message);
-                    message.Message = encryptedMessage;
+                    var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
+                    var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
 
-                    await _profileRepository.SaveMessage(message);
-                    await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
+                    // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further. // TODO: If currenUser is Admin, send message anyway.
+                    if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked))
+                    {
+                        var encryptedMessage = _cryptography.Encrypt(message.Message);
+                        message.Message = encryptedMessage;
 
-                    await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                        await _profileRepository.SaveMessage(message);
+                        await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
+
+                        await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (connectionIndex >= 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    var participant = AllConnectedParticipants.ElementAt(connectionIndex);
+                    var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
-                    AllConnectedParticipants.Remove(participant);
-                    DisconnectedParticipants.Add(participant);
+                    if (connectionIndex >= 0)
+                    {
+                        var participant = AllConnectedParticipants.ElementAt(connectionIndex);
 
-                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                        AllConnectedParticipants.Remove(participant);
+                        DisconnectedParticipants.Add(participant);
+
+                        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    }
+
+                    return base.OnDisconnectedAsync(exception);
                 }
-
-                return base.OnDisconnectedAsync(exception);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
         public override Task OnConnectedAsync()
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
-
-                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (connectionIndex >= 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    var participant = DisconnectedParticipants.ElementAt(connectionIndex);
+                    Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
 
-                    DisconnectedParticipants.Remove(participant);
-                    AllConnectedParticipants.Add(participant);
+                    var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
 
-                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    if (connectionIndex >= 0)
+                    {
+                        var participant = DisconnectedParticipants.ElementAt(connectionIndex);
+
+                        DisconnectedParticipants.Remove(participant);
+                        AllConnectedParticipants.Add(participant);
+
+                        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    }
+
+                    return base.OnConnectedAsync();
                 }
-
-                return base.OnConnectedAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
     }

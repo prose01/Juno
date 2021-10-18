@@ -11,7 +11,7 @@ namespace Juno.Helpers
     {
         private readonly IProfilesRepository _profileRepository;
         private readonly string _nameidentifier;
-        public List<MessageViewModel> mockMessageHistorylist { get; set; }
+        public List<MessageModel> mockMessageHistorylist { get; set; }
 
         public HelperMethods(IProfilesRepository profileRepository, IOptions<Settings> settings)
         {

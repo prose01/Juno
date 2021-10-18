@@ -48,6 +48,7 @@ namespace Juno.Data
             {
                 return await _context.Profiles
                     .Find(filter)
+                    .Project<Profile>(this.GetProjection())
                     .FirstOrDefaultAsync();
             }
             catch (Exception ex)
@@ -59,7 +60,7 @@ namespace Juno.Data
         /// <summary>Gets the currentUser unblocked ChatMember's profileIds by currentUser auth0Id.</summary>
         /// <param name="auth0Id">The Auth0Id.</param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> GetCurrentUsersChatMemberIds(string auth0Id)
+        private async Task<IEnumerable<string>> GetCurrentUsersChatMemberIds(string auth0Id)
         {
             try
             {
@@ -67,6 +68,42 @@ namespace Juno.Data
 
                 var currentUser = await _context.CurrentUser
                     .Find(filter)
+                    .Project<CurrentUser>(
+                    "{" +
+                        "SexualOrientation: 0, " +
+                        "Gender: 0, " +
+                        "Languagecode: 0, " +
+                        "Bookmarks: 0, " +
+                        "ProfileFilter: 0, " +
+                        "Visited: 0, " +
+                        "IsBookmarked: 0, " +
+                        "Likes: 0, " +
+                        "_id: 0, " +
+                        "Admin:0, " +
+                        "CreatedOn: 0, " +
+                        "UpdatedOn: 0, " +
+                        "LastActive: 0, " +
+                        "Countrycode: 0, " +
+                        "Age: 0, " +
+                        "Height: 0, " +
+                        "Description: 0, " +
+                        "Images: 0, " +
+                        "Tags: 0, " +
+                        "Body: 0, " +
+                        "SmokingHabits: 0, " +
+                        "HasChildren: 0, " +
+                        "WantChildren: 0, " +
+                        "HasPets: 0, " +
+                        "LivesIn: 0, " +
+                        "Education: 0, " +
+                        "EducationStatus: 0, " +
+                        "EmploymentStatus: 0, " +
+                        "SportsActivity: 0, " +
+                        "EatingHabits: 0, " +
+                        "ClotheStyle: 0, " +
+                        "BodyArt: 0, " +
+                    "}"
+                    )
                     .FirstOrDefaultAsync();
 
                 var memberslist = (currentUser.ChatMemberslist.Where(member => !member.Blocked).Select(member => member.ProfileId)).ToList();
@@ -80,7 +117,7 @@ namespace Juno.Data
         }
 
         /// <summary>Get profiles on the ChatMemberslist.</summary>
-        /// <param name="currentUser">The current user.</param>
+        /// <param name="auth0Id">The Auth0Id.</param>
         /// <returns></returns>
         public async Task<IEnumerable<Profile>> GetChatMemberslist(string auth0Id)
         {
@@ -98,7 +135,7 @@ namespace Juno.Data
             }
         }
 
-        public async Task SaveMessage(MessageViewModel message)
+        public async Task SaveMessage(MessageModel message)
         {
             try
             {
@@ -121,6 +158,7 @@ namespace Juno.Data
 
                 var destinataryProfile = await _context.Profiles
                         .Find(filter)
+                        .Project<Profile>(this.GetProjection())
                         .FirstOrDefaultAsync();
                 
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId))
@@ -128,12 +166,7 @@ namespace Juno.Data
                     var update = Builders<Profile>
                                     .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUserProfileId, Blocked = false });
 
-                    var options = new FindOneAndUpdateOptions<Profile>
-                    {
-                        ReturnDocument = ReturnDocument.After
-                    };
-
-                    await _context.Profiles.FindOneAndUpdateAsync(filter, update, options);
+                    await _context.Profiles.FindOneAndUpdateAsync(filter, update);
                 }
             }
             catch (Exception ex)
@@ -142,7 +175,7 @@ namespace Juno.Data
             }
         }
 
-        public async Task<IEnumerable<MessageViewModel>> GetMessages(string currentUserAuth0Id, string auth0Id)
+        public async Task<IEnumerable<MessageModel>> GetMessages(string currentUserAuth0Id, string auth0Id)
         {
             try
             {
@@ -168,7 +201,7 @@ namespace Juno.Data
         {
             try
             {
-                var filter = Builders<MessageViewModel>
+                var filter = Builders<MessageModel>
                             .Filter.Lt(m => m.DateSent, DateTime.Now.AddDays(-30));
 
                 try
@@ -187,5 +220,45 @@ namespace Juno.Data
         }
 
         #endregion
+
+        private ProjectionDefinition<Profile> GetProjection()
+        {
+            ProjectionDefinition<Profile> projection = "{ " +
+                "SexualOrientation: 0, " +
+                "Gender: 0, " +
+                "Languagecode: 0, " +
+                "Bookmarks: 0, " +
+                "ProfileFilter: 0, " +
+                "Visited: 0, " +
+                "IsBookmarked: 0, " +
+                "Likes: 0, " +
+                "_id: 0, " +
+                "Admin:0, " +
+                "CreatedOn: 0, " +
+                "UpdatedOn: 0, " +
+                "LastActive: 0, " +
+                "Countrycode: 0, " +
+                "Age: 0, " +
+                "Height: 0, " +
+                "Description: 0, " +
+                "Images: 0, " +
+                "Tags: 0, " +
+                "Body: 0, " +
+                "SmokingHabits: 0, " +
+                "HasChildren: 0, " +
+                "WantChildren: 0, " +
+                "HasPets: 0, " +
+                "LivesIn: 0, " +
+                "Education: 0, " +
+                "EducationStatus: 0, " +
+                "EmploymentStatus: 0, " +
+                "SportsActivity: 0, " +
+                "EatingHabits: 0, " +
+                "ClotheStyle: 0, " +
+                "BodyArt: 0, " +
+                "}";
+
+            return projection;
+        }
     }
 }

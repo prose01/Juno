@@ -75,7 +75,7 @@ namespace Juno.Chat
         //    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
         //}
 
-        //public void SendMessage(MessageViewModel message)
+        //public void SendMessage(MessageModel message)
         //{
         //    var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 

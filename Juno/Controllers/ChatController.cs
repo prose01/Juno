@@ -30,44 +30,51 @@ namespace Juno.Controllers
         [HttpPost("~/ParticipantResponses")]
         public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync()
         {
-            var auth0Id = _helper.GetCurrentUserProfile(User);
-
-            var chatMember = _profileRepository.GetChatMemberslist(auth0Id);
-
-            List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
-
-            if (chatMember.Result != null)
+            try
             {
-                foreach (var profile in chatMember.Result)
+                var auth0Id = _helper.GetCurrentUserProfile(User);
+
+                var chatMember = _profileRepository.GetChatMemberslist(auth0Id);
+
+                List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
+
+                if (chatMember.Result != null)
                 {
-                    chatParticipants.Add(new ChatParticipantViewModel()
+                    foreach (var profile in chatMember.Result)
                     {
-                        ParticipantType = ChatParticipantTypeEnum.User,
-                        Id = profile.Auth0Id,
-                        DisplayName = profile.Name,
-                        Avatar = ""
-                    });
+                        chatParticipants.Add(new ChatParticipantViewModel()
+                        {
+                            ParticipantType = ChatParticipantTypeEnum.User,
+                            Id = profile.Auth0Id,
+                            DisplayName = profile.Name,
+                            Avatar = ""
+                        });
+                    }
                 }
-            }
 
-            List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
+                List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
-            foreach (var friend in chatParticipants)
-            {
-                participantResponses.Add(new ParticipantResponseViewModel()
+                foreach (var friend in chatParticipants)
                 {
-                    Participant = friend,
-                    Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }       // TODO: set number of unread messages.
-                });
+                    participantResponses.Add(new ParticipantResponseViewModel()
+                    {
+                        Participant = friend,
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }       // TODO: set number of unread messages.
+                    });
 
+                }
+
+                return participantResponses;
             }
-
-            return participantResponses;
+            catch(Exception ex)
+            {
+                throw ex;
+            }
         }
 
         [NoCache]
         [HttpPost("~/MessageHistory")]
-        public async Task<IEnumerable<MessageViewModel>> MessageHistory([FromBody] string destinataryId)
+        public async Task<IEnumerable<MessageModel>> MessageHistory([FromBody] string destinataryId)
         {
             var auth0Id = _helper.GetCurrentUserProfile(User);
 
