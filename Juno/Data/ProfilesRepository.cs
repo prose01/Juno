@@ -25,11 +25,11 @@ namespace Juno.Data
         {
             try
             {
-                var query = from p in _context.CurrentUser.AsQueryable()
-                            where p.Auth0Id == auth0Id
-                            select new { p.ProfileId };
+                var query = from c in _context.CurrentUser.AsQueryable()
+                            where c.Auth0Id == auth0Id
+                            select c.ProfileId;
 
-                return await Task.FromResult(query.FirstOrDefault().ToString());
+                return await Task.FromResult(query.FirstOrDefault());
             }
             catch (Exception ex)
             {
@@ -37,12 +37,12 @@ namespace Juno.Data
             }
         }
 
-        /// <summary>Gets the current profile by auth0Id.</summary>
-        /// <param name="auth0Id">The Auth0Id.</param>
+        /// <summary>Gets the current profile by profileId.</summary>
+        /// <param name="profileId">The ProfileId.</param>
         /// <returns></returns>
-        public async Task<Profile> GetDestinataryProfileByAuth0Id(string auth0Id)       // TODO: Change to use ProfileId instead!
+        public async Task<Profile> GetDestinataryProfileByProfileId(string profileId)
         {
-            var filter = Builders<Profile>.Filter.Eq("Auth0Id", auth0Id);
+            var filter = Builders<Profile>.Filter.Eq("ProfileId", profileId);
 
             try
             {
@@ -57,19 +57,20 @@ namespace Juno.Data
             }
         }
 
-        /// <summary>Gets the currentUser unblocked ChatMember's profileIds by currentUser auth0Id.</summary>
-        /// <param name="auth0Id">The Auth0Id.</param>
+        /// <summary>Gets the currentUser unblocked ChatMember's profileIds by currentUser profileId.</summary>
+        /// <param name="profileId">The ProfileId.</param>
         /// <returns></returns>
-        private async Task<IEnumerable<string>> GetCurrentUsersChatMemberIds(string auth0Id)
+        private async Task<IEnumerable<string>> GetCurrentUsersChatMemberIds(string profileId)
         {
             try
             {
-                var filter = Builders<CurrentUser>.Filter.Eq("Auth0Id", auth0Id);
+                var filter = Builders<CurrentUser>.Filter.Eq("ProfileId", profileId);
 
                 var currentUser = await _context.CurrentUser
                     .Find(filter)
                     .Project<CurrentUser>(
                     "{" +
+                        "Auth0Id: 0, "+
                         "SexualOrientation: 0, " +
                         "Gender: 0, " +
                         "Languagecode: 0, " +
@@ -117,15 +118,15 @@ namespace Juno.Data
         }
 
         /// <summary>Get profiles on the ChatMemberslist.</summary>
-        /// <param name="auth0Id">The Auth0Id.</param>
+        /// <param name="profileId">The ProfileId.</param>
         /// <returns></returns>
-        public async Task<IEnumerable<Profile>> GetChatMemberslist(string auth0Id)
+        public async Task<IEnumerable<Profile>> GetChatMemberslist(string profileId)
         {
             try
             {
-                var memberslist = await GetCurrentUsersChatMemberIds(auth0Id);
+                var memberslist = await GetCurrentUsersChatMemberIds(profileId);
 
-                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId)).Project<Profile>("{ _id: 0 , Auth0Id: 1, Name: 1}").ToList();    // TODO: Remove uncontactable from list!!!
+                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId)).Project<Profile>("{ _id: 0 , ProfileId: 1, Name: 1}").ToList();    // TODO: Remove uncontactable from list!!!
 
                 return await Task.FromResult(query.ToList());
             }
@@ -147,22 +148,15 @@ namespace Juno.Data
             }
         }
 
-        public async Task NotifyNewChatMember(string currentUserAuth0Id, string destinataryAuth0Id)
+        public async Task NotifyNewChatMember(string currentUserProfileId, Profile destinataryProfile)
         {
             try
-            {
-                var currentUserProfileId = await GetCurrentProfileIdByAuth0Id(currentUserAuth0Id);
-
-                var filter = Builders<Profile>
-                            .Filter.Eq(e => e.Auth0Id, destinataryAuth0Id);
-
-                var destinataryProfile = await _context.Profiles
-                        .Find(filter)
-                        .Project<Profile>(this.GetProjection())
-                        .FirstOrDefaultAsync();
-                
+            {                
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId))
                 {
+                    var filter = Builders<Profile>
+                                .Filter.Eq(e => e.ProfileId, destinataryProfile.ProfileId);
+
                     var update = Builders<Profile>
                                     .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUserProfileId, Blocked = false });
 
@@ -175,12 +169,12 @@ namespace Juno.Data
             }
         }
 
-        public async Task<IEnumerable<MessageModel>> GetMessages(string currentUserAuth0Id, string auth0Id)
+        public async Task<IEnumerable<MessageModel>> GetMessages(string currentUserProfileId, string profileId)
         {
             try
             {
                 var query = from m in _context.Messages.AsQueryable()
-                            where (m.FromId == currentUserAuth0Id && m.ToId == auth0Id) || (m.FromId == auth0Id && m.ToId == currentUserAuth0Id)
+                            where (m.FromId == currentUserProfileId && m.ToId == profileId) || (m.FromId == profileId && m.ToId == currentUserProfileId)
                             orderby m.DateSent descending
                             select m;
 
@@ -224,6 +218,7 @@ namespace Juno.Data
         private ProjectionDefinition<Profile> GetProjection()
         {
             ProjectionDefinition<Profile> projection = "{ " +
+                "Auth0Id: 0, " +
                 "SexualOrientation: 0, " +
                 "Gender: 0, " +
                 "Languagecode: 0, " +

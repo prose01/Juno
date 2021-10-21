@@ -1,12 +1,13 @@
 ﻿using Juno.Model;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Juno.Interfaces
 {
     public interface IHelperMethods
     {
-        string GetCurrentUserProfile(ClaimsPrincipal user);
+        Task<string> GetCurrentUserProfileId(ClaimsPrincipal user);
         List<MessageModel> mockMessageHistorylist { get; set; }
     }
 }

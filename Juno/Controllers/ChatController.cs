@@ -32,9 +32,9 @@ namespace Juno.Controllers
         {
             try
             {
-                var auth0Id = _helper.GetCurrentUserProfile(User);
+                var profileId = await _helper.GetCurrentUserProfileId(User);
 
-                var chatMember = _profileRepository.GetChatMemberslist(auth0Id);
+                var chatMember = _profileRepository.GetChatMemberslist(profileId);
 
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
@@ -45,7 +45,7 @@ namespace Juno.Controllers
                         chatParticipants.Add(new ChatParticipantViewModel()
                         {
                             ParticipantType = ChatParticipantTypeEnum.User,
-                            Id = profile.Auth0Id,
+                            Id = profile.ProfileId,
                             DisplayName = profile.Name,
                             Avatar = ""
                         });
@@ -76,16 +76,25 @@ namespace Juno.Controllers
         [HttpPost("~/MessageHistory")]
         public async Task<IEnumerable<MessageModel>> MessageHistory([FromBody] string destinataryId)
         {
-            var auth0Id = _helper.GetCurrentUserProfile(User);
-
-            var messages = await _profileRepository.GetMessages(auth0Id, destinataryId);
-
-            foreach(var message in messages)
+            try
             {
-                message.Message = _cryptography.Decrypt(message.Message);
-            }
+                var profileId = await _helper.GetCurrentUserProfileId(User);
 
-            return messages;
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId); // TODO: Change destinataryId to ProfileId in paramenter
+
+                var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
+
+                foreach (var message in messages)
+                {
+                    message.Message = _cryptography.Decrypt(message.Message);
+                }
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         #region Maintenance

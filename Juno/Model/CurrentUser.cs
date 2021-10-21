@@ -25,7 +25,7 @@ namespace Juno.Model
         #endregion
 
         //internal override ObjectId _id { get; set; }
-        public override string Auth0Id { internal get; set; }
+        public string Auth0Id { internal get; set; }
         public override string ProfileId { get; set; }
         public bool Admin { get; set; } = false;
         public override string Name { get; set; }

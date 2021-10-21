@@ -43,9 +43,11 @@ namespace Juno.Chat
             {
                 lock (ParticipantsConnectionLock)
                 {
-                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
 
-                    if (oldConnectedParticipants.Count() == 0)
+                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == currentUserProfileId);
+
+                    if (!oldConnectedParticipants.Any())
                     {
                         AllConnectedParticipants.Add(new ParticipantResponseViewModel()
                         {
@@ -56,14 +58,14 @@ namespace Juno.Chat
                             Participant = new ChatParticipantViewModel()
                             {
                                 DisplayName = userName,
-                                Id = Context.UserIdentifier
+                                Id = currentUserProfileId
                             }
                         });
                     }
 
                     // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                     // You should most likely use another ID on your application
-                    Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
+                    Clients.Caller.SendAsync("generatedUserId", currentUserProfileId);
 
                     Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                 }
@@ -80,23 +82,27 @@ namespace Juno.Chat
             {
                 var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
-                if (sender != null)
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(message.ToId);
+                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
+
+                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further. // TODO: If currenUser is Admin, send message anyway.
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked))
                 {
-                    var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
-                    var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
-
-                    // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further. // TODO: If currenUser is Admin, send message anyway.
-                    if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked))
+                    if (sender != null)
                     {
-                        var encryptedMessage = _cryptography.Encrypt(message.Message);
-                        message.Message = encryptedMessage;
-
-                        await _profileRepository.SaveMessage(message);
-                        await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
-
                         await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
                     }
+
+                    var encryptedMessage = _cryptography.Encrypt(message.Message);
+                    message.Message = encryptedMessage;
+
+                    message.ToId = destinataryProfile.ProfileId;
+
+                    await _profileRepository.SaveMessage(message);
+                    await _profileRepository.NotifyNewChatMember(currentUserProfileId, destinataryProfile);
                 }
+
+                // See https://github.com/rpaschoal/ng-chat-netcoreapp/blob/master/NgChatSignalR/ChatHub.cs7
             }
             catch (Exception ex)
             {
@@ -110,7 +116,9 @@ namespace Juno.Chat
             {
                 lock (ParticipantsConnectionLock)
                 {
-                    var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
+
+                    var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == currentUserProfileId);
 
                     if (connectionIndex >= 0)
                     {
@@ -137,9 +145,11 @@ namespace Juno.Chat
             {
                 lock (ParticipantsConnectionLock)
                 {
-                    Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
 
-                    var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
+                    Groups.AddToGroupAsync(Context.ConnectionId, currentUserProfileId);
+
+                    var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == currentUserProfileId);
 
                     if (connectionIndex >= 0)
                     {

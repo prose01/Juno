@@ -11,7 +11,7 @@ namespace Juno.Model
     {
         //[BsonId]
         //internal abstract ObjectId _id { get; set; }
-        public abstract string Auth0Id { internal get; set; }
+        //public abstract string Auth0Id { internal get; set; }
         public abstract string ProfileId { get; set; }
         //public abstract bool Admin { get; set; }
 
