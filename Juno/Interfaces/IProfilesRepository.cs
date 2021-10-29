@@ -1,4 +1,5 @@
 ﻿using Juno.Model;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace Juno.Interfaces
         Task SaveMessage(MessageModel message);
         Task NotifyNewChatMember(string currentUserProfileId, Profile destinataryProfile);
         Task<IEnumerable<MessageModel>> GetMessages(string currentUserProfileId, string profileId);
+        Task MessagesSeen(ObjectId messagesId);
+        int TotalUnreadMessages(string profileId);
         Task<DeleteResult> DeleteOldMessages();
     }
 }

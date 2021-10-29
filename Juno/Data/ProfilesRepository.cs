@@ -1,6 +1,7 @@
 ﻿using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -175,10 +176,49 @@ namespace Juno.Data
             {
                 var query = from m in _context.Messages.AsQueryable()
                             where (m.FromId == currentUserProfileId && m.ToId == profileId) || (m.FromId == profileId && m.ToId == currentUserProfileId)
-                            orderby m.DateSent descending
+                            orderby m.DateSent ascending
                             select m;
 
                 return await Task.FromResult(query.ToList());
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task MessagesSeen(ObjectId messagesId)
+        {
+            try
+            {
+                var filter = Builders<MessageModel>
+                               .Filter.Eq(m => m._id, messagesId);
+
+                var update = Builders<MessageModel>
+                            .Update.Set(m => m.DateSeen, DateTime.Now);
+
+                await _context.Messages.FindOneAndUpdateAsync(filter, update);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public int TotalUnreadMessages(string profileId)
+        {
+            try
+            {
+                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DateSeen, null));
+
+                var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                return (int)_context.Messages
+                            .Find(combineFilters).CountDocuments();
             }
             catch (Exception ex)
             {

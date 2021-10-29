@@ -59,7 +59,7 @@ namespace Juno.Controllers
                     participantResponses.Add(new ParticipantResponseViewModel()
                     {
                         Participant = friend,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 123 }       // TODO: set number of unread messages.
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(profileId) }
                     });
 
                 }
@@ -80,13 +80,18 @@ namespace Juno.Controllers
             {
                 var profileId = await _helper.GetCurrentUserProfileId(User);
 
-                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId); // TODO: Change destinataryId to ProfileId in paramenter
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId);
 
                 var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
 
                 foreach (var message in messages)
                 {
                     message.Message = _cryptography.Decrypt(message.Message);
+
+                    if (message.ToId == profileId && message.DateSeen == null)
+                    {
+                        await _profileRepository.MessagesSeen(message._id);
+                    }
                 }
 
                 return messages;
