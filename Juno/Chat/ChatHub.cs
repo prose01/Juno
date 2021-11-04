@@ -17,7 +17,7 @@ namespace Juno.Chat
         /// 
 
         private readonly IProfilesRepository _profileRepository;
-        private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
+        public static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
 
@@ -58,7 +58,8 @@ namespace Juno.Chat
                             Participant = new ChatParticipantViewModel()
                             {
                                 DisplayName = userName,
-                                Id = currentUserProfileId
+                                Id = currentUserProfileId,
+                                Status = 0
                             }
                         });
                     }
@@ -130,6 +131,8 @@ namespace Juno.Chat
                         Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                     }
 
+                    Clients.All.SendAsync("UserIsOffline", currentUserProfileId);
+
                     return base.OnDisconnectedAsync(exception);
                 }
             }
@@ -160,6 +163,8 @@ namespace Juno.Chat
 
                         Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                     }
+
+                    Clients.All.SendAsync("UserIsOnline", currentUserProfileId);
 
                     return base.OnConnectedAsync();
                 }

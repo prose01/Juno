@@ -2,8 +2,8 @@
 
 namespace Juno.Model
 {
-    public class GroupChatParticipantViewModel : ChatParticipantViewModel
-    {
-        public IList<ChatParticipantViewModel> ChattingTo { get; set; }
-    }
+    //public class GroupChatParticipantViewModel : ChatParticipantViewModel
+    //{
+    //    public IList<ChatParticipantViewModel> ChattingTo { get; set; }
+    //}
 }

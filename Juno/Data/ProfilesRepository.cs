@@ -127,7 +127,7 @@ namespace Juno.Data
             {
                 var memberslist = await GetCurrentUsersChatMemberIds(profileId);
 
-                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId)).Project<Profile>("{ _id: 0 , ProfileId: 1, Name: 1}").ToList();    // TODO: Remove uncontactable from list!!!
+                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId)).Project<Profile>("{ _id: 0, ProfileId: 1, Name: 1}").ToList();    // TODO: Remove uncontactable from list!!!
 
                 return await Task.FromResult(query.ToList());
             }

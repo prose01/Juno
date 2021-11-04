@@ -1,10 +1,12 @@
-﻿using Juno.Infrastructure;
+﻿using Juno.Chat;
+using Juno.Infrastructure;
 using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Juno.Controllers
@@ -28,26 +30,25 @@ namespace Juno.Controllers
 
         [NoCache]
         [HttpPost("~/ParticipantResponses")]
-        public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync()
+        public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync([FromBody] CurrentUser item)
         {
             try
             {
-                var profileId = await _helper.GetCurrentUserProfileId(User);
-
-                var chatMember = _profileRepository.GetChatMemberslist(profileId);
-
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
-                if (chatMember.Result != null)
+                if (item.ChatMemberslist.Count > 0)
                 {
-                    foreach (var profile in chatMember.Result)
+                    foreach (var profile in item.ChatMemberslist)
                     {
+                        var oldConnectedParticipants = ChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
+
                         chatParticipants.Add(new ChatParticipantViewModel()
                         {
                             ParticipantType = ChatParticipantTypeEnum.User,
                             Id = profile.ProfileId,
                             DisplayName = profile.Name,
-                            Avatar = ""
+                            Avatar = "",
+                            Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
                     }
                 }
@@ -59,9 +60,8 @@ namespace Juno.Controllers
                     participantResponses.Add(new ParticipantResponseViewModel()
                     {
                         Participant = friend,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(profileId) }
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(item.ProfileId) }
                     });
-
                 }
 
                 return participantResponses;
