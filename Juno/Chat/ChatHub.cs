@@ -84,10 +84,10 @@ namespace Juno.Chat
                 var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
                 var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(message.ToId);
-                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
+                var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
 
-                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further. // TODO: If currenUser is Admin, send message anyway.
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked))
+                // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)
                 {
                     if (sender != null)
                     {
@@ -100,7 +100,7 @@ namespace Juno.Chat
                     message.ToId = destinataryProfile.ProfileId;
 
                     await _profileRepository.SaveMessage(message);
-                    await _profileRepository.NotifyNewChatMember(currentUserProfileId, destinataryProfile);
+                    await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);
                 }
 
                 // See https://github.com/rpaschoal/ng-chat-netcoreapp/blob/master/NgChatSignalR/ChatHub.cs7

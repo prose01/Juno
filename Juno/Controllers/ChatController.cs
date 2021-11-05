@@ -60,7 +60,7 @@ namespace Juno.Controllers
                     participantResponses.Add(new ParticipantResponseViewModel()
                     {
                         Participant = friend,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(item.ProfileId) }
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
                     });
                 }
 

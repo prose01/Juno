@@ -38,6 +38,26 @@ namespace Juno.Data
             }
         }
 
+        /// <summary>Gets the currentUser by auth0Id.</summary>
+        /// <param name="auth0Id">The Auth0Id.</param>
+        /// <returns></returns>
+        public async Task<CurrentUser> GetCurrentUserByAuth0Id(string auth0Id)
+        {
+            var filter = Builders<CurrentUser>.Filter.Eq("Auth0Id", auth0Id);
+
+            try
+            {
+                return await _context.CurrentUser
+                    .Find(filter)
+                    .Project<CurrentUser>(this.GetCurrentUserProjection())
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         /// <summary>Gets the current profile by profileId.</summary>
         /// <param name="profileId">The ProfileId.</param>
         /// <returns></returns>
@@ -58,85 +78,6 @@ namespace Juno.Data
             }
         }
 
-        /// <summary>Gets the currentUser unblocked ChatMember's profileIds by currentUser profileId.</summary>
-        /// <param name="profileId">The ProfileId.</param>
-        /// <returns></returns>
-        private async Task<IEnumerable<string>> GetCurrentUsersChatMemberIds(string profileId)
-        {
-            try
-            {
-                var filter = Builders<CurrentUser>.Filter.Eq("ProfileId", profileId);
-
-                var currentUser = await _context.CurrentUser
-                    .Find(filter)
-                    .Project<CurrentUser>(
-                    "{" +
-                        "Auth0Id: 0, "+
-                        "SexualOrientation: 0, " +
-                        "Gender: 0, " +
-                        "Languagecode: 0, " +
-                        "Bookmarks: 0, " +
-                        "ProfileFilter: 0, " +
-                        "Visited: 0, " +
-                        "IsBookmarked: 0, " +
-                        "Likes: 0, " +
-                        "_id: 0, " +
-                        "Admin:0, " +
-                        "CreatedOn: 0, " +
-                        "UpdatedOn: 0, " +
-                        "LastActive: 0, " +
-                        "Countrycode: 0, " +
-                        "Age: 0, " +
-                        "Height: 0, " +
-                        "Description: 0, " +
-                        "Images: 0, " +
-                        "Tags: 0, " +
-                        "Body: 0, " +
-                        "SmokingHabits: 0, " +
-                        "HasChildren: 0, " +
-                        "WantChildren: 0, " +
-                        "HasPets: 0, " +
-                        "LivesIn: 0, " +
-                        "Education: 0, " +
-                        "EducationStatus: 0, " +
-                        "EmploymentStatus: 0, " +
-                        "SportsActivity: 0, " +
-                        "EatingHabits: 0, " +
-                        "ClotheStyle: 0, " +
-                        "BodyArt: 0, " +
-                    "}"
-                    )
-                    .FirstOrDefaultAsync();
-
-                var memberslist = (currentUser.ChatMemberslist.Where(member => !member.Blocked).Select(member => member.ProfileId)).ToList();
-                
-                return memberslist;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>Get profiles on the ChatMemberslist.</summary>
-        /// <param name="profileId">The ProfileId.</param>
-        /// <returns></returns>
-        public async Task<IEnumerable<Profile>> GetChatMemberslist(string profileId)
-        {
-            try
-            {
-                var memberslist = await GetCurrentUsersChatMemberIds(profileId);
-
-                var query = _context.Profiles.Find(p => memberslist.Contains(p.ProfileId)).Project<Profile>("{ _id: 0, ProfileId: 1, Name: 1}").ToList();    // TODO: Remove uncontactable from list!!!
-
-                return await Task.FromResult(query.ToList());
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
         public async Task SaveMessage(MessageModel message)
         {
             try
@@ -149,17 +90,17 @@ namespace Juno.Data
             }
         }
 
-        public async Task NotifyNewChatMember(string currentUserProfileId, Profile destinataryProfile)
+        public async Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile)
         {
             try
             {                
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId))
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId))
                 {
                     var filter = Builders<Profile>
                                 .Filter.Eq(e => e.ProfileId, destinataryProfile.ProfileId);
 
                     var update = Builders<Profile>
-                                    .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUserProfileId, Blocked = false });
+                                    .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUser.ProfileId, Name = currentUser.Name, Blocked = false });
 
                     await _context.Profiles.FindOneAndUpdateAsync(filter, update);
                 }
@@ -205,11 +146,13 @@ namespace Juno.Data
             }
         }
 
-        public int TotalUnreadMessages(string profileId)
+        public int TotalUnreadMessages(string chatMemberId, string profileId)
         {
             try
             {
                 List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatMemberId));
 
                 filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
 
@@ -217,8 +160,10 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
-                return (int)_context.Messages
+                var tt = (int)_context.Messages
                             .Find(combineFilters).CountDocuments();
+
+                return tt;
             }
             catch (Exception ex)
             {
@@ -269,6 +214,46 @@ namespace Juno.Data
                 "Likes: 0, " +
                 "_id: 0, " +
                 "Admin:0, " +
+                "CreatedOn: 0, " +
+                "UpdatedOn: 0, " +
+                "LastActive: 0, " +
+                "Countrycode: 0, " +
+                "Age: 0, " +
+                "Height: 0, " +
+                "Description: 0, " +
+                "Images: 0, " +
+                "Tags: 0, " +
+                "Body: 0, " +
+                "SmokingHabits: 0, " +
+                "HasChildren: 0, " +
+                "WantChildren: 0, " +
+                "HasPets: 0, " +
+                "LivesIn: 0, " +
+                "Education: 0, " +
+                "EducationStatus: 0, " +
+                "EmploymentStatus: 0, " +
+                "SportsActivity: 0, " +
+                "EatingHabits: 0, " +
+                "ClotheStyle: 0, " +
+                "BodyArt: 0, " +
+                "}";
+
+            return projection;
+        }
+
+        private ProjectionDefinition<CurrentUser> GetCurrentUserProjection()
+        {
+            ProjectionDefinition<CurrentUser> projection = "{ " +
+                "Auth0Id: 0, " +
+                "SexualOrientation: 0, " +
+                "Gender: 0, " +
+                "Languagecode: 0, " +
+                "Bookmarks: 0, " +
+                "ProfileFilter: 0, " +
+                "Visited: 0, " +
+                "IsBookmarked: 0, " +
+                "Likes: 0, " +
+                "_id: 0, " +
                 "CreatedOn: 0, " +
                 "UpdatedOn: 0, " +
                 "LastActive: 0, " +
