@@ -160,10 +160,8 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
-                var tt = (int)_context.Messages
+                return (int)_context.Messages
                             .Find(combineFilters).CountDocuments();
-
-                return tt;
             }
             catch (Exception ex)
             {
@@ -174,23 +172,16 @@ namespace Juno.Data
 
         #region Maintenance
 
-        /// <summary>Deletes Message that are more than 30 days old.</summary>
+        /// <summary>Deletes Messages that are more than 30 days old.</summary>
         /// <returns></returns>
         public async Task<DeleteResult> DeleteOldMessages()
         {
             try
             {
                 var filter = Builders<MessageModel>
-                            .Filter.Lt(m => m.DateSent, DateTime.Now.AddDays(-30));
+                            .Filter.Gt(m => m.DateSent, DateTime.Now.AddDays(-30));
 
-                try
-                {
-                    return await _context.Messages.DeleteManyAsync(filter);
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
+                return await _context.Messages.DeleteManyAsync(filter);
             }
             catch (Exception ex)
             {

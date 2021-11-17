@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Juno.Controllers
@@ -108,13 +109,14 @@ namespace Juno.Controllers
         /// <returns></returns>
         [NoCache]
         [HttpDelete("~/DeleteOldMessages")]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
         public async Task<IActionResult> DeleteOldMessages()
         {
             try
             {
                 //var oldMessages = await _profileRepository.DeleteOldMessages(); // TODO: Needs to be testet.
 
-                return Ok();
+                return NoContent();
             }
             catch (Exception ex)
             {

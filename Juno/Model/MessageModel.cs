@@ -14,7 +14,7 @@ namespace Juno.Model
 
         public string ToId { get; set; }
 
-        [StringLength(2000, ErrorMessage = "Message length cannot be more than 2000.")]
+        [StringLength(2000, ErrorMessage = "Message length cannot be more than 2000 characters long.")]
         public string Message { get; set; }
 
         [DataType(DataType.DateTime)]
