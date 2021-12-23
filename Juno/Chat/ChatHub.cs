@@ -21,13 +21,11 @@ namespace Juno.Chat
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
 
-        private readonly IHelperMethods _helper;
         private readonly ICryptography _cryptography;
 
-        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod, ICryptography cryptography)
+        public ChatHub(IProfilesRepository profileRepository, ICryptography cryptography)
         {
             _profileRepository = profileRepository;
-            _helper = helperMethod;
             _cryptography = cryptography;
         }
 
@@ -98,6 +96,8 @@ namespace Juno.Chat
                     message.Message = encryptedMessage;
 
                     message.ToId = destinataryProfile.ProfileId;
+                    message.ToName = destinataryProfile.Name;
+                    message.FromName = currentUser.Name;
 
                     await _profileRepository.SaveMessage(message);
                     await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);

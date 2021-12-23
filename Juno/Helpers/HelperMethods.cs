@@ -29,5 +29,22 @@ namespace Juno.Helpers
 
             return await _profileRepository.GetCurrentProfileIdByAuth0Id(auth0Id) ?? string.Empty; // TODO: Burde smide en fejl hvis bruger ikke findes.
         }
+
+        /// <summary>Gets the current user profile.</summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task<CurrentUser> GetCurrentUserByAuth0Id(ClaimsPrincipal user)
+        {
+            try
+            {
+                var auth0Id = user.Claims.FirstOrDefault(c => c.Type == _nameidentifier)?.Value;
+
+                return await _profileRepository.GetCurrentUserByAuth0Id(auth0Id) ?? new CurrentUser(); // TODO: Burde smide en fejl hvis bruger ikke findes.
+            }
+            catch
+            {
+                throw;
+            }
+        }
     }
 }

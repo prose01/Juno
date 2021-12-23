@@ -103,6 +103,39 @@ namespace Juno.Controllers
             }
         }
 
+        [NoCache]
+        [HttpGet("~/ProfileMessages/{profileId}")]
+        public async Task<IEnumerable<MessageModel>> ProfileMessages(string profileId)
+        {
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null || !currentUser.Admin)
+                {
+                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                }
+
+                var messages = await _profileRepository.GetProfileMessages(profileId);
+
+                foreach (var message in messages)
+                {
+                    message.Message = _cryptography.Decrypt(message.Message);
+
+                    if (message.ToId == profileId && message.DateSeen == null)
+                    {
+                        await _profileRepository.MessagesSeen(message._id);
+                    }
+                }
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         #region Maintenance
 
         /// <summary>Deletes Message that are more than 30 days old.</summary>

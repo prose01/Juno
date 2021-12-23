@@ -170,6 +170,28 @@ namespace Juno.Data
         }
 
 
+        public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId)
+        {
+            try
+            {
+                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, profileId));
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
+
+                var combineFilters = Builders<MessageModel>.Filter.Or(filters);
+
+                return await _context.Messages
+                            .Find(combineFilters).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
         #region Maintenance
 
         /// <summary>Deletes Messages that are more than 30 days old.</summary>

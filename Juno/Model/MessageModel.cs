@@ -12,7 +12,11 @@ namespace Juno.Model
 
         public string FromId { get; set; }
 
+        public string FromName { get; set; }
+
         public string ToId { get; set; }
+
+        public string ToName { get; set; }
 
         [StringLength(2000, ErrorMessage = "Message length cannot be more than 2000 characters long.")]
         public string Message { get; set; }
@@ -22,5 +26,7 @@ namespace Juno.Model
 
         [DataType(DataType.DateTime)]
         public DateTime? DateSeen { get; set; }
+
+        public bool DoNotDelete { get; set; }
     }
 }
