@@ -61,13 +61,13 @@ namespace Juno.Controllers
                     participantResponses.Add(new ParticipantResponseViewModel()
                     {
                         Participant = friend,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages =  _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
                     });
                 }
 
                 return participantResponses;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -129,6 +129,39 @@ namespace Juno.Controllers
                 }
 
                 return messages;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// Gets the specified chats based on a filter. Eg. { Message: 'something' }
+        /// </summary>
+        /// <param name="parameterFilter"></param>
+        /// <exception cref="ArgumentException">ProfileFilter is null. {requestBody.ChatFilter}</exception>
+        /// <exception cref="ArgumentException">Cannot find any matching chats. {requestBody.ProfileFilter}</exception>
+        /// <returns></returns>
+        [NoCache]
+        [HttpPost("~/GetChatsByFilter")]
+        public async Task<IEnumerable<MessageModel>> GetChatsByFilter([FromBody] RequestBody requestBody, [FromQuery] ParameterFilter parameterFilter)
+        {
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null || !currentUser.Admin)
+                {
+                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                }
+
+                if (requestBody.ChatFilter == null) throw new ArgumentException($"ChatFilter is null.", nameof(requestBody.ChatFilter));
+
+                var skip = parameterFilter.PageIndex == 0 ? parameterFilter.PageIndex : parameterFilter.PageIndex * parameterFilter.PageSize;
+
+                return await _profileRepository.GetChatsByFilter(requestBody.ChatFilter, skip, parameterFilter.PageSize) ?? throw new ArgumentException($"Cannot find any matching chats.", nameof(requestBody.ChatFilter));
+
             }
             catch (Exception ex)
             {

@@ -191,6 +191,50 @@ namespace Juno.Data
             }
         }
 
+        public async Task<IEnumerable<MessageModel>> GetChatsByFilter(ChatFilter chatFilter, int skip, int limit)
+        {
+            try
+            {
+                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                if (chatFilter.FromId != null)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromId));
+
+                if (chatFilter.FromName != null)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromName));
+
+                if (chatFilter.ToId != null)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, chatFilter.ToId));
+
+                if (chatFilter.Message != null)
+                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.Message, new BsonRegularExpression(chatFilter.Message, "i")));
+
+                if (chatFilter.DateSentStart != null)
+                    filters.Add(Builders<MessageModel>.Filter.Gte(m => m.DateSent, chatFilter.DateSentStart));
+
+                if (chatFilter.DateSentEnd != null)
+                    filters.Add(Builders<MessageModel>.Filter.Lte(m => m.DateSent, chatFilter.DateSentEnd));
+
+                if (chatFilter.DateSeenStart != null)
+                    filters.Add(Builders<MessageModel>.Filter.Gte(m => m.DateSent, chatFilter.DateSeenStart));
+
+                if (chatFilter.DateSeenEnd != null)
+                    filters.Add(Builders<MessageModel>.Filter.Lte(m => m.DateSeen, chatFilter.DateSeenEnd));
+
+                if (chatFilter.DoNotDelete != null)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, chatFilter.DoNotDelete));
+
+                var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                return await _context.Messages
+                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
 
         #region Maintenance
 
