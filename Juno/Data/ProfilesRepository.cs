@@ -224,6 +224,10 @@ namespace Juno.Data
                 if (chatFilter.DoNotDelete != null && chatFilter.DoNotDelete != "notChosen")
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, chatFilter.DoNotDelete));
 
+                // Safety break for searches with no filters.
+                if (filters.Count == 0)
+                    return new List<MessageModel>();
+
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
                 return await _context.Messages
