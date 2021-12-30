@@ -221,7 +221,7 @@ namespace Juno.Data
                 if (chatFilter.DateSeenEnd != null)
                     filters.Add(Builders<MessageModel>.Filter.Lte(m => m.DateSeen, chatFilter.DateSeenEnd));
 
-                if (chatFilter.DoNotDelete != null)
+                if (chatFilter.DoNotDelete != null && chatFilter.DoNotDelete != "notChosen")
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, chatFilter.DoNotDelete));
 
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
