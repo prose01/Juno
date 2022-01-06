@@ -27,6 +27,6 @@ namespace Juno.Model
         [DataType(DataType.DateTime)]
         public DateTime? DateSeen { get; set; }
 
-        public string DoNotDelete { get; set; } = "notChosen";
+        public bool DoNotDelete { get; set; }
     }
 }

@@ -206,8 +206,9 @@ namespace Juno.Data
                 if (chatFilter.ToId != null)
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, chatFilter.ToId));
 
-                if (chatFilter.Message != null)
-                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.Message, new BsonRegularExpression(chatFilter.Message, "i")));
+                // For now we cannot filter on message as it is stored encrypted in the database.
+                //if (chatFilter.Message != null)
+                //    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.Message, new BsonRegularExpression(chatFilter.Message, "i")));
 
                 if (chatFilter.DateSentStart != null)
                     filters.Add(Builders<MessageModel>.Filter.Gte(m => m.DateSent, chatFilter.DateSentStart));
@@ -221,8 +222,11 @@ namespace Juno.Data
                 if (chatFilter.DateSeenEnd != null)
                     filters.Add(Builders<MessageModel>.Filter.Lte(m => m.DateSeen, chatFilter.DateSeenEnd));
 
-                if (chatFilter.DoNotDelete != null && chatFilter.DoNotDelete != "notChosen")
-                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, chatFilter.DoNotDelete));
+                if (chatFilter.DoNotDelete != null)
+                {
+                    bool.TryParse(chatFilter.DoNotDelete, out bool parsedValue);
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, parsedValue));
+                }
 
                 // Safety break for searches with no filters.
                 if (filters.Count == 0)

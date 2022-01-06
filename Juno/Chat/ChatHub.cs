@@ -98,6 +98,7 @@ namespace Juno.Chat
                     message.ToId = destinataryProfile.ProfileId;
                     message.ToName = destinataryProfile.Name;
                     message.FromName = currentUser.Name;
+                    message.DoNotDelete = false;
 
                     await _profileRepository.SaveMessage(message);
                     await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);
