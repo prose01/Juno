@@ -243,6 +243,38 @@ namespace Juno.Data
             }
         }
 
+        /// <summary>Set messages as Do Not Delete</summary>
+        /// <param name="messages"></param>
+        public async Task DoNotDelete(MessageModel[] messages, bool doNotDelete)
+        {
+            try
+            {
+
+                foreach (var message in messages)
+                {
+
+                    List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, message.FromId));
+
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId));
+
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DateSent, message.DateSent));
+
+                    var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                    var update = Builders<MessageModel>
+                                .Update.Set(m => m.DoNotDelete, doNotDelete);
+
+                    await _context.Messages.FindOneAndUpdateAsync(combineFilters, update);
+                }
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
 
         #region Maintenance
 

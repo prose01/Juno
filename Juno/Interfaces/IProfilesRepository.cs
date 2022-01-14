@@ -18,6 +18,7 @@ namespace Juno.Interfaces
         int TotalUnreadMessages(string chatMemberId, string profileId);
         Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId);
         Task<IEnumerable<MessageModel>> GetChatsByFilter(ChatFilter chatFilter, int skip, int limit);
+        Task DoNotDelete(MessageModel[] messages, bool doNotDelete);
         Task<DeleteResult> DeleteOldMessages();
     }
 }

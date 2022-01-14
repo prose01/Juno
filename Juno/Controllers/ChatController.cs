@@ -140,6 +140,7 @@ namespace Juno.Controllers
         /// Gets the specified chats based on a filter. Eg. { Message: 'something' }
         /// </summary>
         /// <param name="parameterFilter"></param>
+        /// <exception cref="ArgumentException">Current user is null or does not have admin status.</exception>
         /// <exception cref="ArgumentException">ProfileFilter is null. {requestBody.ChatFilter}</exception>
         /// <exception cref="ArgumentException">Cannot find any matching chats. {requestBody.ProfileFilter}</exception>
         /// <returns></returns>
@@ -162,6 +163,62 @@ namespace Juno.Controllers
 
                 return await _profileRepository.GetChatsByFilter(requestBody.ChatFilter, skip, parameterFilter.PageSize) ?? throw new ArgumentException($"Cannot find any matching chats.", nameof(requestBody.ChatFilter));
 
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>Set messages as Do Not Delete</summary>
+        /// <param name="messages"></param>
+        /// <exception cref="ArgumentException">Current user is null or does not have admin status.</exception>
+        /// <exception cref="ArgumentException">Messages is null {requestBody.ChatFilter}</exception>
+        /// <exception cref="ArgumentException">Cannot find any matching chats. {requestBody.ProfileFilter}</exception>
+        [NoCache]
+        [HttpPost("~/DoNotDelete")]
+        public async Task DoNotDelete([FromBody] MessageModel[] messages)
+        {
+            if (messages == null || messages.Length < 1) throw new ArgumentException($"Messages is null");
+
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null || !currentUser.Admin)
+                {
+                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                }
+
+                await _profileRepository.DoNotDelete(messages, true);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>Allow Deleteof messages</summary>
+        /// <param name="messages"></param>
+        /// <exception cref="ArgumentException">Current user is null or does not have admin status.</exception>
+        /// <exception cref="ArgumentException">Messages is null {requestBody.ChatFilter}</exception>
+        /// <exception cref="ArgumentException">Cannot find any matching chats. {requestBody.ProfileFilter}</exception>
+        [NoCache]
+        [HttpPost("~/AllowDelete")]
+        public async Task AllowDelete([FromBody] MessageModel[] messages)
+        {
+            if (messages == null || messages.Length < 1) throw new ArgumentException($"Messages is null");
+
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null || !currentUser.Admin)
+                {
+                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                }
+
+                await _profileRepository.DoNotDelete(messages, false);
             }
             catch (Exception ex)
             {
