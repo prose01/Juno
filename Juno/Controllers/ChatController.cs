@@ -103,9 +103,15 @@ namespace Juno.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets profile messages
+        /// </summary>
+        /// <param name="parameterFilter"></param>
+        /// <exception cref="ArgumentException">Current user is null or does not have admin status.</exception>
+        /// <returns></returns>
         [NoCache]
         [HttpGet("~/ProfileMessages/{profileId}")]
-        public async Task<IEnumerable<MessageModel>> ProfileMessages(string profileId)
+        public async Task<IEnumerable<MessageModel>> ProfileMessages(string profileId, [FromQuery] ParameterFilter parameterFilter)
         {
             try
             {
@@ -116,7 +122,9 @@ namespace Juno.Controllers
                     throw new ArgumentException($"Current user is null or does not have admin status.");
                 }
 
-                var messages = await _profileRepository.GetProfileMessages(profileId);
+                var skip = parameterFilter.PageIndex == 0 ? parameterFilter.PageIndex : parameterFilter.PageIndex * parameterFilter.PageSize;
+
+                var messages = await _profileRepository.GetProfileMessages(profileId, skip, parameterFilter.PageSize);
 
                 foreach (var message in messages)
                 {
@@ -137,7 +145,7 @@ namespace Juno.Controllers
         }
 
         /// <summary>
-        /// Gets the specified chats based on a filter. Eg. { Message: 'something' }
+        /// Gets the specified message based on a filter. Eg. { Message: 'something' }
         /// </summary>
         /// <param name="parameterFilter"></param>
         /// <exception cref="ArgumentException">Current user is null or does not have admin status.</exception>

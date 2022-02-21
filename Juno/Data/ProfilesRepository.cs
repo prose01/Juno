@@ -1,5 +1,6 @@
 ﻿using Juno.Interfaces;
 using Juno.Model;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -13,10 +14,12 @@ namespace Juno.Data
     public class ProfilesRepository : IProfilesRepository
     {
         private readonly ProfileContext _context = null;
+        private readonly int _deleteMessagesOlderThan;
 
-        public ProfilesRepository(IOptions<Settings> settings)
+        public ProfilesRepository(IOptions<Settings> settings, IConfiguration config)
         {
             _context = new ProfileContext(settings);
+            _deleteMessagesOlderThan = config.GetValue<int>("DeleteMessagesOlderThan");
         }
 
         /// <summary>Gets the currentUser profileId by auth0Id.</summary>
@@ -170,7 +173,7 @@ namespace Juno.Data
         }
 
 
-        public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId)
+        public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit)
         {
             try
             {
@@ -183,7 +186,7 @@ namespace Juno.Data
                 var combineFilters = Builders<MessageModel>.Filter.Or(filters);
 
                 return await _context.Messages
-                            .Find(combineFilters).ToListAsync();
+                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -269,9 +272,9 @@ namespace Juno.Data
                     await _context.Messages.FindOneAndUpdateAsync(combineFilters, update);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
         }
 
@@ -284,10 +287,15 @@ namespace Juno.Data
         {
             try
             {
-                var filter = Builders<MessageModel>
-                            .Filter.Gt(m => m.DateSent, DateTime.Now.AddDays(-30));
+                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
-                return await _context.Messages.DeleteManyAsync(filter);
+                filters.Add(Builders<MessageModel>.Filter.Gt(m => m.DateSeen, DateTime.Now.AddDays(-_deleteMessagesOlderThan)));
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, false));
+
+                var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                return await _context.Messages.DeleteManyAsync(combineFilters);
             }
             catch (Exception ex)
             {

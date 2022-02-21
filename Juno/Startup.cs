@@ -37,15 +37,15 @@ namespace Juno
         public void ConfigureServices(IServiceCollection services)
         {
             // Add service and create Policy with options
-            //services.AddCors(options =>
-            //{
-            //    options.AddPolicy("CorsPolicy",
-            //        builder => builder
-            //            .AllowAnyOrigin()
-            //            .AllowAnyMethod()
-            //            .AllowAnyHeader()
-            //        );
-            //});
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder.WithOrigins("http://localhost:4200")
+                                .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
+                                .AllowAnyHeader()
+                                .AllowCredentials()
+                    );
+            });
 
             // Add framework services.
             services.AddMvc().AddJsonOptions(options => {
@@ -54,7 +54,13 @@ namespace Juno
 
             // Add SignalR.
             services
-                .AddSignalR();
+                .AddSignalR(hubOptions =>
+                {
+                    hubOptions.EnableDetailedErrors = true;
+                    hubOptions.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
+                    hubOptions.KeepAliveInterval = TimeSpan.FromMilliseconds(15);
+                });
+
 
             // Add authentication.
             string domain = $"https://{Configuration["Auth0_Domain"]}/";
@@ -68,23 +74,23 @@ namespace Juno
                 options.Authority = domain;
                 options.Audience = Configuration["Auth0_ApiIdentifier"];
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
+                //options.Events = new JwtBearerEvents
+                //{
+                //    OnMessageReceived = context =>
+                //    {
+                //        var accessToken = context.Request.Query["access_token"];
 
-                        // If the request is for our hub...
-                        var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) &&
-                            (path.StartsWithSegments("/chatHub")))
-                        {
-                            // Read the token out of the query string
-                            context.Token = accessToken;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
+                //        // If the request is for our hub...
+                //        var path = context.HttpContext.Request.Path;
+                //        if (!string.IsNullOrEmpty(accessToken) &&
+                //            (path.StartsWithSegments("/chatHub")))
+                //        {
+                //            // Read the token out of the query string
+                //            context.Token = accessToken;
+                //        }
+                //        return Task.CompletedTask;
+                //    }
+                //};
             });
             
             // register the scope authorization handler
@@ -96,7 +102,7 @@ namespace Juno
             // Add our helper method(s)
             services.AddSingleton<ICryptography, Cryptography>();
             services.AddSingleton<IHelperMethods, HelperMethods>();
-            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+            //services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
@@ -153,6 +159,7 @@ namespace Juno
 
             // Shows UseCors with CorsPolicyBuilder.
             // Remember to remove Cors for production.
+            app.UseCors("CorsPolicy");
             //app.UseCors(builder =>
             //    builder.WithOrigins("http://localhost:4200")
             //        .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
