@@ -309,7 +309,7 @@ namespace Juno.Data
         {
             ProjectionDefinition<Profile> projection = "{ " +
                 "Auth0Id: 0, " +
-                "SexualOrientation: 0, " +
+                "Seeking: 0, " +
                 "Gender: 0, " +
                 "Languagecode: 0, " +
                 "Bookmarks: 0, " +
@@ -350,7 +350,7 @@ namespace Juno.Data
         {
             ProjectionDefinition<CurrentUser> projection = "{ " +
                 "Auth0Id: 0, " +
-                "SexualOrientation: 0, " +
+                "Seeking: 0, " +
                 "Gender: 0, " +
                 "Languagecode: 0, " +
                 "Bookmarks: 0, " +
