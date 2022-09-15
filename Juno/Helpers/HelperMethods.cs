@@ -1,6 +1,7 @@
 ﻿using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -27,7 +28,7 @@ namespace Juno.Helpers
         {
             var auth0Id = user.Claims.FirstOrDefault(c => c.Type == _nameidentifier)?.Value;
 
-            return await _profileRepository.GetCurrentProfileIdByAuth0Id(auth0Id) ?? string.Empty; // TODO: Burde smide en fejl hvis bruger ikke findes.
+            return await _profileRepository.GetCurrentProfileIdByAuth0Id(auth0Id) ?? throw new ArgumentException($"User unkown.", nameof(user));
         }
 
         /// <summary>Gets the current user profile.</summary>
@@ -39,7 +40,7 @@ namespace Juno.Helpers
             {
                 var auth0Id = user.Claims.FirstOrDefault(c => c.Type == _nameidentifier)?.Value;
 
-                return await _profileRepository.GetCurrentUserByAuth0Id(auth0Id) ?? new CurrentUser(); // TODO: Burde smide en fejl hvis bruger ikke findes.
+                return await _profileRepository.GetCurrentUserByAuth0Id(auth0Id) ?? throw new ArgumentException($"User unkown.", nameof(user));
             }
             catch
             {

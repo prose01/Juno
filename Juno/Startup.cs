@@ -37,7 +37,6 @@ namespace Juno
         public void ConfigureServices(IServiceCollection services)
         {
             // Add service and create Policy with options
-            // TODO: Remember to remove Cors for production.
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
@@ -159,7 +158,6 @@ namespace Juno
             }
 
             // Shows UseCors with CorsPolicyBuilder.
-            // TODO: Remember to remove Cors for production.
             app.UseCors("CorsPolicy");
             //app.UseCors(builder =>
             //    builder.WithOrigins("http://localhost:4200")
