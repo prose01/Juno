@@ -35,9 +35,9 @@ namespace Juno.Data
 
                 return await Task.FromResult(query.FirstOrDefault());
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -55,9 +55,9 @@ namespace Juno.Data
                     .Project<CurrentUser>(this.GetCurrentUserProjection())
                     .FirstOrDefaultAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -75,9 +75,9 @@ namespace Juno.Data
                     .Project<Profile>(this.GetProjection())
                     .FirstOrDefaultAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -87,9 +87,9 @@ namespace Juno.Data
             {
                 await _context.Messages.InsertOneAsync(message);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -108,9 +108,9 @@ namespace Juno.Data
                     await _context.Profiles.FindOneAndUpdateAsync(filter, update);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -125,9 +125,9 @@ namespace Juno.Data
 
                 return await Task.FromResult(query.ToList());
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -143,9 +143,9 @@ namespace Juno.Data
 
                 await _context.Messages.FindOneAndUpdateAsync(filter, update);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -166,9 +166,9 @@ namespace Juno.Data
                 return (int)_context.Messages
                             .Find(combineFilters).CountDocuments();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -188,9 +188,9 @@ namespace Juno.Data
                 return await _context.Messages
                             .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -240,9 +240,9 @@ namespace Juno.Data
                 return await _context.Messages
                             .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -272,9 +272,9 @@ namespace Juno.Data
                     await _context.Messages.FindOneAndUpdateAsync(combineFilters, update);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -297,9 +297,9 @@ namespace Juno.Data
 
                 return await _context.Messages.DeleteManyAsync(combineFilters);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 

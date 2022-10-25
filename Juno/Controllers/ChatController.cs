@@ -67,9 +67,9 @@ namespace Juno.Controllers
 
                 return participantResponses;
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -97,9 +97,9 @@ namespace Juno.Controllers
 
                 return messages;
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -138,9 +138,9 @@ namespace Juno.Controllers
 
                 return messages;
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -172,9 +172,9 @@ namespace Juno.Controllers
                 return await _profileRepository.GetChatsByFilter(requestBody.ChatFilter, skip, parameterFilter.PageSize) ?? throw new ArgumentException($"Cannot find any matching chats.", nameof(requestBody.ChatFilter));
 
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -200,9 +200,9 @@ namespace Juno.Controllers
 
                 await _profileRepository.DoNotDelete(messages, true);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -228,9 +228,9 @@ namespace Juno.Controllers
 
                 await _profileRepository.DoNotDelete(messages, false);
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -249,9 +249,9 @@ namespace Juno.Controllers
 
                 return NoContent();
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 

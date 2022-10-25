@@ -69,9 +69,9 @@ namespace Juno.Chat
                     Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -106,9 +106,9 @@ namespace Juno.Chat
 
                 // See https://github.com/rpaschoal/ng-chat-netcoreapp/blob/master/NgChatSignalR/ChatHub.cs7
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -137,9 +137,9 @@ namespace Juno.Chat
                     return base.OnDisconnectedAsync(exception);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -170,9 +170,9 @@ namespace Juno.Chat
                     return base.OnConnectedAsync();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
+                throw;
             }
         }
     }
