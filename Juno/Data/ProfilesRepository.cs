@@ -381,6 +381,7 @@ namespace Juno.Data
                 "EatingHabits: 0, " +
                 "ClotheStyle: 0, " +
                 "BodyArt: 0, " +
+                "Complains: 0 " +
                 "}";
 
             return projection;

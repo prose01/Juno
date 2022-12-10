@@ -87,11 +87,6 @@ namespace Juno.Chat
                 // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)
                 {
-                    if (sender != null)
-                    {
-                        await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
-                    }
-
                     var encryptedMessage = _cryptography.Encrypt(message.Message);
                     message.Message = encryptedMessage;
 
@@ -102,6 +97,11 @@ namespace Juno.Chat
 
                     await _profileRepository.SaveMessage(message);
                     await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);
+
+                    if (sender != null)
+                    {
+                        await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                    }
                 }
 
                 // See https://github.com/rpaschoal/ng-chat-netcoreapp/blob/master/NgChatSignalR/ChatHub.cs7
