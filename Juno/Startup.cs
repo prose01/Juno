@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,7 +14,6 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Juno
 {
@@ -40,10 +38,10 @@ namespace Juno
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
-                    builder => builder
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
+                    builder => builder.WithOrigins("http://localhost:4200")
+                                .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
+                                .AllowAnyHeader()
+                                .AllowCredentials()
                     );
             });
 
@@ -54,10 +52,16 @@ namespace Juno
 
             // Add SignalR.
             services
-                .AddSignalR();
+                .AddSignalR(hubOptions =>
+                {
+                    hubOptions.EnableDetailedErrors = true;
+                    hubOptions.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
+                    hubOptions.KeepAliveInterval = TimeSpan.FromMilliseconds(15);
+                });
+
 
             // Add authentication.
-            string domain = $"https://{Configuration["Auth0:Domain"]}/";
+            string domain = $"https://{Configuration["Auth0_Domain"]}/";
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -66,25 +70,25 @@ namespace Juno
             }).AddJwtBearer(options =>
             {
                 options.Authority = domain;
-                options.Audience = Configuration["Auth0:ApiIdentifier"];
+                options.Audience = Configuration["Auth0_ApiIdentifier"];
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
+                //options.Events = new JwtBearerEvents
+                //{
+                //    OnMessageReceived = context =>
+                //    {
+                //        var accessToken = context.Request.Query["access_token"];
 
-                        // If the request is for our hub...
-                        var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) &&
-                            (path.StartsWithSegments("/chatHub")))
-                        {
-                            // Read the token out of the query string
-                            context.Token = accessToken;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
+                //        // If the request is for our hub...
+                //        var path = context.HttpContext.Request.Path;
+                //        if (!string.IsNullOrEmpty(accessToken) &&
+                //            (path.StartsWithSegments("/chatHub")))
+                //        {
+                //            // Read the token out of the query string
+                //            context.Token = accessToken;
+                //        }
+                //        return Task.CompletedTask;
+                //    }
+                //};
             });
             
             // register the scope authorization handler
@@ -96,7 +100,7 @@ namespace Juno
             // Add our helper method(s)
             services.AddSingleton<ICryptography, Cryptography>();
             services.AddSingleton<IHelperMethods, HelperMethods>();
-            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+            //services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
@@ -132,9 +136,9 @@ namespace Juno
 
             services.Configure<Settings>(options =>
             {
-                options.ConnectionString = Configuration.GetSection("MongoConnection:ConnectionString").Value;
-                options.Database = Configuration.GetSection("MongoConnection:Database").Value;
-                options.auth0Id = Configuration.GetSection("Auth0:Claims-nameidentifier").Value;
+                options.ConnectionString = Configuration.GetSection("Mongo_ConnectionString").Value;
+                options.Database = Configuration.GetSection("Mongo_Database").Value;
+                options.auth0Id = Configuration.GetSection("Auth0_Claims_nameidentifier").Value;
             });
 
             services.AddControllers();
@@ -152,13 +156,13 @@ namespace Juno
             }
 
             // Shows UseCors with CorsPolicyBuilder.
-            // Remember to remove Cors for production.
-            app.UseCors(builder =>
-                builder.WithOrigins("http://localhost:4200")
-                    .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
-                    .AllowAnyHeader()
-                    .AllowCredentials()
-            );
+            app.UseCors("CorsPolicy");
+            //app.UseCors(builder =>
+            //    builder.WithOrigins("http://localhost:4200")
+            //        .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
+            //        .AllowAnyHeader()
+            //        .AllowCredentials()
+            //);
 
             app.UseHttpsRedirection();
             

@@ -17,8 +17,8 @@ namespace Juno.Helpers
 
         public Cryptography(IConfiguration config)
         {
-            _key = config.GetValue<string>("Cryptography:Key");
-            _iv = config.GetValue<string>("Cryptography:IV");
+            _key = config.GetValue<string>("Cryptography_Key");
+            _iv = config.GetValue<string>("Cryptography_IV");
         }
 
         public string Encrypt(string PlainText)

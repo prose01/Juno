@@ -75,13 +75,13 @@ namespace Juno.Chat
         //    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
         //}
 
-        //public void SendMessage(MessageViewModel message)
+        //public void SendMessage(MessageModel message)
         //{
-        //    var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
+        //    var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromProfileId);
 
         //    if (sender != null)
         //    {
-        //        var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToId).FirstOrDefault();
+        //        var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToProfileId).FirstOrDefault();
 
         //        if (groupDestinatary != null)
         //        {
@@ -96,7 +96,7 @@ namespace Juno.Chat
         //        }
         //        else
         //        {
-        //            Clients.Client(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+        //            Clients.Client(message.ToProfileId).SendAsync("messageReceived", sender.Participant, message);
         //        }
         //    }
         //}

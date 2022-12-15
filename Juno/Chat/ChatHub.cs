@@ -12,18 +12,20 @@ namespace Juno.Chat
     [Authorize]
     public class ChatHub : Hub
     {
+        /// TODO: Kig på https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client
+        /// https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0
+        /// 
+
         private readonly IProfilesRepository _profileRepository;
-        private static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
+        public static List<ParticipantResponseViewModel> AllConnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private static List<ParticipantResponseViewModel> DisconnectedParticipants { get; set; } = new List<ParticipantResponseViewModel>();
         private object ParticipantsConnectionLock = new object();
 
-        private readonly IHelperMethods _helper;
         private readonly ICryptography _cryptography;
 
-        public ChatHub(IProfilesRepository profileRepository, IHelperMethods helperMethod, ICryptography cryptography)
+        public ChatHub(IProfilesRepository profileRepository, ICryptography cryptography)
         {
             _profileRepository = profileRepository;
-            _helper = helperMethod;
             _cryptography = cryptography;
         }
 
@@ -35,96 +37,144 @@ namespace Juno.Chat
 
         public void Join(string userName)
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (oldConnectedParticipants.Count() == 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
+
+                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == currentUserProfileId);
+
+                    if (!oldConnectedParticipants.Any())
                     {
-                        Metadata = new ParticipantMetadataViewModel()
+                        AllConnectedParticipants.Add(new ParticipantResponseViewModel()
                         {
-                            TotalUnreadMessages = 0
-                        },
-                        Participant = new ChatParticipantViewModel()
-                        {
-                            DisplayName = userName,
-                            Id = Context.UserIdentifier
-                        }
-                    });
+                            Metadata = new ParticipantMetadataViewModel()
+                            {
+                                TotalUnreadMessages = 0
+                            },
+                            Participant = new ChatParticipantViewModel()
+                            {
+                                DisplayName = userName,
+                                Id = currentUserProfileId,
+                                Status = 0
+                            }
+                        });
+                    }
+
+                    // This will be used as the user's unique ID to be used on ng-chat as the connected user.
+                    // You should most likely use another ID on your application
+                    Clients.Caller.SendAsync("generatedUserId", currentUserProfileId);
+
+                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                 }
-
-                // This will be used as the user's unique ID to be used on ng-chat as the connected user.
-                // You should most likely use another ID on your application
-                Clients.Caller.SendAsync("generatedUserId", Context.UserIdentifier);
-
-                Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+            }
+            catch
+            {
+                throw;
             }
         }
 
-        public async Task SendMessage(MessageViewModel message)
+        public async Task SendMessage(MessageModel message)
         {
-            var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
-
-            if (sender != null)
+            try
             {
-                var destinataryProfile = await _profileRepository.GetDestinataryProfileByAuth0Id(message.ToId);
-                var currentUserProfileId = await _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier);
+                var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
+
+                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(message.ToId);
+                var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
 
                 // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUserProfileId && m.Blocked == true))
+                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)
                 {
+
+                    message.ToId = destinataryProfile.ProfileId;
+                    message.ToName = destinataryProfile.Name;
+                    message.FromName = currentUser.Name;
+                    message.DoNotDelete = false;
+
+                    if (sender != null)
+                    {
+                        await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                    }
+
+                    // Messages should be encrypted before storing to database.
                     var encryptedMessage = _cryptography.Encrypt(message.Message);
                     message.Message = encryptedMessage;
 
                     await _profileRepository.SaveMessage(message);
-                    await _profileRepository.NotifyNewChatMember(Context.UserIdentifier, destinataryProfile.Auth0Id);
-
-                    await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                    await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);
                 }
+
+                // See https://github.com/rpaschoal/ng-chat-netcoreapp/blob/master/NgChatSignalR/ChatHub.cs7
+            }
+            catch
+            {
+                throw;
             }
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (connectionIndex >= 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    var participant = AllConnectedParticipants.ElementAt(connectionIndex);
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
 
-                    AllConnectedParticipants.Remove(participant);
-                    DisconnectedParticipants.Add(participant);
+                    var connectionIndex = AllConnectedParticipants.FindIndex(x => x.Participant.Id == currentUserProfileId);
 
-                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    if (connectionIndex >= 0)
+                    {
+                        var participant = AllConnectedParticipants.ElementAt(connectionIndex);
+
+                        AllConnectedParticipants.Remove(participant);
+                        DisconnectedParticipants.Add(participant);
+
+                        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    }
+
+                    Clients.All.SendAsync("UserIsOffline", currentUserProfileId);
+
+                    return base.OnDisconnectedAsync(exception);
                 }
-
-                return base.OnDisconnectedAsync(exception);
+            }
+            catch
+            {
+                throw;
             }
         }
 
         public override Task OnConnectedAsync()
         {
-            lock (ParticipantsConnectionLock)
+            try
             {
-                Groups.AddToGroupAsync(Context.ConnectionId, Context.UserIdentifier);
-
-                var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == Context.UserIdentifier);
-
-                if (connectionIndex >= 0)
+                lock (ParticipantsConnectionLock)
                 {
-                    var participant = DisconnectedParticipants.ElementAt(connectionIndex);
+                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
 
-                    DisconnectedParticipants.Remove(participant);
-                    AllConnectedParticipants.Add(participant);
+                    Groups.AddToGroupAsync(Context.ConnectionId, currentUserProfileId);
 
-                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    var connectionIndex = DisconnectedParticipants.FindIndex(x => x.Participant.Id == currentUserProfileId);
+
+                    if (connectionIndex >= 0)
+                    {
+                        var participant = DisconnectedParticipants.ElementAt(connectionIndex);
+
+                        DisconnectedParticipants.Remove(participant);
+                        AllConnectedParticipants.Add(participant);
+
+                        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    }
+
+                    Clients.All.SendAsync("UserIsOnline", currentUserProfileId);
+
+                    return base.OnConnectedAsync();
                 }
-
-                return base.OnConnectedAsync();
+            }
+            catch
+            {
+                throw;
             }
         }
     }
