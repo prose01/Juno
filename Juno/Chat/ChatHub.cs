@@ -114,7 +114,7 @@ namespace Juno.Chat
             }
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public Task OnDisconnectedAsync(Exception? exception)
         {
             try
             {
