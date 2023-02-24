@@ -35,6 +35,9 @@ namespace Juno.Controllers
         {
             try
             {
+                string[] profileIds = item.ChatMemberslist.Select(p => p.ProfileId).ToArray();
+                var avatars = await _profileRepository.GetProfileAvatarrByIds(profileIds);
+
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
                 if (item.ChatMemberslist.Count > 0)
@@ -43,14 +46,19 @@ namespace Juno.Controllers
                     {
                         var oldConnectedParticipants = ChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
 
+                        var avatarInfo = avatars.Where(p => p.ProfileId == profile.ProfileId).ToList();
+
                         chatParticipants.Add(new ChatParticipantViewModel()
                         {
                             ParticipantType = ChatParticipantTypeEnum.User,
                             Id = profile.ProfileId,
                             DisplayName = profile.Name,
+                            Initials = avatarInfo[0].Avatar["Initials"],
+                            CircleColor = avatarInfo[0].Avatar["Colour"],
                             Avatar = "",
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
+
                     }
                 }
 
@@ -58,6 +66,7 @@ namespace Juno.Controllers
 
                 foreach (var friend in chatParticipants)
                 {
+                    // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
                     participantResponses.Add(new ParticipantResponseViewModel()
                     {
                         Participant = friend,
@@ -67,7 +76,7 @@ namespace Juno.Controllers
 
                 return participantResponses;
             }
-            catch
+            catch (Exception ex)
             {
                 throw;
             }
@@ -83,7 +92,7 @@ namespace Juno.Controllers
 
                 var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId);
 
-                if(destinataryProfile != null)
+                if (destinataryProfile != null)
                 {
                     var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
 

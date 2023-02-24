@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Juno.Model
@@ -12,5 +13,6 @@ namespace Juno.Model
         public abstract string Name { get; set; }
 
         public abstract bool Contactable { get; set; }
+        public abstract Dictionary<string, string> Avatar { get; set; }
     }
 }

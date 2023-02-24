@@ -7,6 +7,8 @@
         public int Status { get; set; }
         public string Avatar { get; set; }
         public string DisplayName { get; set; }
+        public string Initials { get; set; }
+        public string CircleColor { get; set; }
         //public string Avatar
         //{
         //    get

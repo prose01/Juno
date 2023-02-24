@@ -13,5 +13,6 @@ namespace Juno.Model
         public override string ProfileId { get; set; }
         public override string Name { get; set; }
         public override bool Contactable { get; set; } = true;
+        public override Dictionary<string, string> Avatar { get; set; }
     }
 }
