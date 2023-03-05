@@ -9,6 +9,5 @@ namespace Juno.Model
         public string Name { get; set; }
 
         public bool Blocked { get; set; }
-        public Dictionary<string, string> Avatar { get; set; }
     }
 }

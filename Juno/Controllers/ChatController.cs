@@ -55,7 +55,6 @@ namespace Juno.Controllers
                             DisplayName = profile.Name,
                             Initials = avatarInfo[0].Avatar["Initials"],
                             CircleColor = avatarInfo[0].Avatar["Colour"],
-                            Avatar = "",
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
 
