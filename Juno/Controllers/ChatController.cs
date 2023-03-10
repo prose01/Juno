@@ -53,8 +53,9 @@ namespace Juno.Controllers
                             ParticipantType = ChatParticipantTypeEnum.User,
                             Id = profile.ProfileId,
                             DisplayName = profile.Name,
-                            Initials = avatarInfo[0].Avatar["Initials"],
-                            CircleColor = avatarInfo[0].Avatar["Colour"],
+                            Initials = avatarInfo[0].Avatar.Initials,
+                            InitialsColour = avatarInfo[0].Avatar.InitialsColour,
+                            CircleColour = avatarInfo[0].Avatar.CircleColour,
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
 

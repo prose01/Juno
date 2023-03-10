@@ -12,6 +12,8 @@
 
         public string Initials { get; set; }
 
-        public string CircleColor { get; set; }
+        public string InitialsColour { get; set; }
+
+        public string CircleColour { get; set; }
     }
 }

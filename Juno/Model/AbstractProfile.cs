@@ -12,5 +12,7 @@ namespace Juno.Model
         public abstract string Name { get; set; }
 
         public abstract bool Contactable { get; set; }
+
+        public abstract AvatarModel Avatar { get; set; }
     }
 }

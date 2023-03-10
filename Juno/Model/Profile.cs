@@ -16,6 +16,6 @@ namespace Juno.Model
 
         public override bool Contactable { get; set; } = true;
 
-        public  Dictionary<string, string> Avatar { get; set; }
+        public override AvatarModel Avatar { get; set; }
     }
 }
