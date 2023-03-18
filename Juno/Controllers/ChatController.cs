@@ -44,7 +44,7 @@ namespace Juno.Controllers
                 {
                     foreach (var profile in item.ChatMemberslist)
                     {
-                        var oldConnectedParticipants = ChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
+                        var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
 
                         var avatarInfo = avatars.Where(p => p.ProfileId == profile.ProfileId).ToList();
 

@@ -87,7 +87,6 @@ namespace Juno.Chat
                 // If currentUser is on the destinataryProfile's ChatMemberslist AND is blocked then do not go any further.
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)
                 {
-
                     message.ToId = destinataryProfile.ProfileId;
                     message.ToName = destinataryProfile.Name;
                     message.FromName = currentUser.Name;

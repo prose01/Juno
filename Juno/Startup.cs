@@ -186,6 +186,7 @@ namespace Juno
             {
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapHub<GroupChatHub>("/GroupChatHub");
             });
         }
     }
