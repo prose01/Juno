@@ -79,27 +79,34 @@ namespace Juno.Chat
             }
         }
 
-        public void GroupCreated(GroupChatParticipantViewModel group)       // TODO: This need to save group to DB
+        public async Task GroupCreated(GroupChatParticipantViewModel group)       // TODO: This need to save group to DB
         {
-            AllGroupParticipants.Add(group);
-
-            // Pushing the current user to the "chatting to" list to keep track of who's created the group as well.
-            // In your application you'll probably want a more sofisticated group persistency and management
-            group.ChattingTo.Add(new ChatParticipantViewModel()
+            try
             {
-                Id = Context.ConnectionId
-            });
+                AllGroupParticipants.Add(group);
 
-            AllConnectedParticipants.Add(new ParticipantResponseViewModel()
-            {
-                Metadata = new ParticipantMetadataViewModel()
+                // Pushing the current user to the "chatting to" list to keep track of who's created the group as well.
+                // In your application you'll probably want a more sofisticated group persistency and management
+                group.ChattingTo.Add(new ChatParticipantViewModel()
                 {
-                    TotalUnreadMessages = 0
-                },
-                Participant = group
-            });
+                    Id = Context.ConnectionId
+                });
 
-            Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                {
+                    Metadata = new ParticipantMetadataViewModel()
+                    {
+                        TotalUnreadMessages = 0
+                    },
+                    Participant = group
+                });
+
+                Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public async Task SendMessage(MessageModel message)

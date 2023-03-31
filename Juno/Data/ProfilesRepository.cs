@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Juno.Data
@@ -124,6 +125,42 @@ namespace Juno.Data
                             select m;
 
                 return await Task.FromResult(query.ToList());
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<MessageModel>> GetGroupMessages(string groupId)
+        {
+            try
+            {
+                var query = from m in _context.Messages.AsQueryable()
+                            where m.ToId == groupId
+                            orderby m.DateSent ascending
+                            select m;
+
+                return await Task.FromResult(query.ToList());
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds)
+        {
+            try
+            {
+                var filter = Builders<GroupModel>
+                                .Filter.In(g => g.GroupId, groupIds);
+
+                var tt = await _context.Groups
+                    .Find(filter)
+                    .ToListAsync();
+
+                return tt;
             }
             catch
             {

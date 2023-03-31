@@ -74,6 +74,28 @@ namespace Juno.Controllers
                     });
                 }
 
+                var groups = await _profileRepository.GetGroups(item.Groups.ToArray());
+
+                foreach (var group in groups)
+                {
+                    var participantGroup = new ChatParticipantViewModel()
+                    {
+                        ParticipantType = ChatParticipantTypeEnum.Group,
+                        Id = group.GroupId,
+                        DisplayName = group.Name,
+                        Initials = group.Avatar.Initials,
+                        InitialsColour = group.Avatar.InitialsColour,
+                        CircleColour = group.Avatar.CircleColour,
+                        Status = 0 // TODO: Look in oldConnectedParticipants if any group members are there
+                    };
+
+                    participantResponses.Add(new ParticipantResponseViewModel()
+                    {
+                        Participant = participantGroup,
+                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
+                    });
+                }
+
                 return participantResponses;
             }
             catch (Exception ex)
@@ -84,32 +106,134 @@ namespace Juno.Controllers
 
         [NoCache]
         [HttpPost("~/MessageHistory")]
-        public async Task<IEnumerable<MessageModel>> MessageHistory([FromBody] string destinataryId)
+        public async Task<IEnumerable<MessageModel>> MessageHistory([FromBody] ChatParticipantViewModel chatparticipant)
         {
             try
             {
-                var profileId = await _helper.GetCurrentUserProfileId(User);
-
-                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId);
-
-                if (destinataryProfile != null)
+                if (chatparticipant.ParticipantType == ChatParticipantTypeEnum.Group)
                 {
-                    var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
+                    var messages = await _profileRepository.GetGroupMessages(chatparticipant.Id);
 
                     foreach (var message in messages)
                     {
                         message.Message = _cryptography.Decrypt(message.Message);
-
-                        if (message.ToId == profileId && message.DateSeen == null)
-                        {
-                            await _profileRepository.MessagesSeen(message._id);
-                        }
                     }
 
                     return messages;
                 }
+                else
+                {
+                    var profileId = await _helper.GetCurrentUserProfileId(User);
+
+                    var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(chatparticipant.Id);
+
+                    if (destinataryProfile != null)
+                    {
+                        var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
+
+                        foreach (var message in messages)
+                        {
+                            message.Message = _cryptography.Decrypt(message.Message);
+
+                            if (message.ToId == profileId && message.DateSeen == null)
+                            {
+                                await _profileRepository.MessagesSeen(message._id);
+                            }
+                        }
+
+                        return messages;
+                    }
+                }
 
                 return null;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        //[NoCache]
+        //[HttpPost("~/GroupMessageHistory")]
+        //public async Task<IEnumerable<MessageModel>> GroupMessageHistory([FromBody] string groupId)
+        //{
+        //    try
+        //    {
+        //        //var profileId = await _helper.GetCurrentUserProfileId(User);
+
+        //        //var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId);
+
+        //        if (!string.IsNullOrEmpty(groupId))
+        //        {
+        //            var messages = await _profileRepository.GetGroupMessages(groupId);
+
+        //            foreach (var message in messages)
+        //            {
+        //                message.Message = _cryptography.Decrypt(message.Message);
+
+        //                //if (message.ToId == profileId && message.DateSeen == null)    // TODO: How do I know if I have read new messages?
+        //                //{
+        //                //    await _profileRepository.MessagesSeen(message._id);
+        //                //}
+        //            }
+
+        //            return messages;
+        //        }
+
+        //        return null;
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
+
+        [NoCache]
+        [HttpPost("~/Groups")]
+        public async Task<IEnumerable<GroupChatParticipantViewModel>> Groups()
+        {
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+                //string[] profileIds = { currentUser.ProfileId };
+                //var avatars = await _profileRepository.GetProfileAvatarrByIds(profileIds);
+
+                if (currentUser == null || !currentUser.Admin)
+                {
+                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                }
+
+                var groups = await _profileRepository.GetGroups(currentUser.Groups.ToArray());
+
+                List<GroupChatParticipantViewModel> allGroupParticipants = new List<GroupChatParticipantViewModel>();
+                List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
+
+                foreach (var group in groups)
+                {
+                    var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == currentUser.ProfileId);
+
+                    //var avatarInfo = avatars.Where(p => p.ProfileId == currentUser.ProfileId).ToList();
+
+                    chatParticipants.Add(new ChatParticipantViewModel()
+                    {
+                        ParticipantType = ChatParticipantTypeEnum.User,
+                        Id = currentUser.ProfileId,
+                        DisplayName = currentUser.Name,
+                        Initials = currentUser.Avatar.Initials,
+                        InitialsColour = currentUser.Avatar.InitialsColour,
+                        CircleColour = currentUser.Avatar.CircleColour,
+                        Status = oldConnectedParticipants.Any() ? 0 : 3
+                    });
+
+                    allGroupParticipants.Add(new GroupChatParticipantViewModel()
+                    {
+                        Id = group.GroupId,
+                        DisplayName = group.Name,
+                        ChattingTo = chatParticipants
+                    });
+                }
+
+                return allGroupParticipants;
             }
             catch
             {

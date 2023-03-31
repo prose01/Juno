@@ -18,5 +18,6 @@ namespace Juno.Data
         public IMongoCollection<CurrentUser> CurrentUser => _database.GetCollection<CurrentUser>("Profile");
         public IMongoCollection<Profile> Profiles => _database.GetCollection<Profile>("Profile");
         public IMongoCollection<MessageModel> Messages => _database.GetCollection<MessageModel>("Message");
+        public IMongoCollection<GroupModel> Groups => _database.GetCollection<GroupModel>("ChatGroups");
     }
 }
