@@ -4,6 +4,7 @@ using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +59,6 @@ namespace Juno.Controllers
                             CircleColour = avatarInfo[0].Avatar.CircleColour,
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
-
                     }
                 }
 
@@ -78,6 +78,10 @@ namespace Juno.Controllers
 
                 foreach (var group in groups)
                 {
+                    var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id));
+                    var set2 = new HashSet<string>(group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
+                    set1.IntersectWith(set2);
+
                     var participantGroup = new ChatParticipantViewModel()
                     {
                         ParticipantType = ChatParticipantTypeEnum.Group,
@@ -86,7 +90,7 @@ namespace Juno.Controllers
                         Initials = group.Avatar.Initials,
                         InitialsColour = group.Avatar.InitialsColour,
                         CircleColour = group.Avatar.CircleColour,
-                        Status = 0 // TODO: Look in oldConnectedParticipants if any group members are there
+                        Status = set1.Any() ? 0 : 3 
                     };
 
                     participantResponses.Add(new ParticipantResponseViewModel()
@@ -98,7 +102,7 @@ namespace Juno.Controllers
 
                 return participantResponses;
             }
-            catch (Exception ex)
+            catch
             {
                 throw;
             }
@@ -153,41 +157,6 @@ namespace Juno.Controllers
             }
         }
 
-        //[NoCache]
-        //[HttpPost("~/GroupMessageHistory")]
-        //public async Task<IEnumerable<MessageModel>> GroupMessageHistory([FromBody] string groupId)
-        //{
-        //    try
-        //    {
-        //        //var profileId = await _helper.GetCurrentUserProfileId(User);
-
-        //        //var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(destinataryId);
-
-        //        if (!string.IsNullOrEmpty(groupId))
-        //        {
-        //            var messages = await _profileRepository.GetGroupMessages(groupId);
-
-        //            foreach (var message in messages)
-        //            {
-        //                message.Message = _cryptography.Decrypt(message.Message);
-
-        //                //if (message.ToId == profileId && message.DateSeen == null)    // TODO: How do I know if I have read new messages?
-        //                //{
-        //                //    await _profileRepository.MessagesSeen(message._id);
-        //                //}
-        //            }
-
-        //            return messages;
-        //        }
-
-        //        return null;
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
-
         [NoCache]
         [HttpPost("~/Groups")]
         public async Task<IEnumerable<GroupChatParticipantViewModel>> Groups()
@@ -198,9 +167,9 @@ namespace Juno.Controllers
                 //string[] profileIds = { currentUser.ProfileId };
                 //var avatars = await _profileRepository.GetProfileAvatarrByIds(profileIds);
 
-                if (currentUser == null || !currentUser.Admin)
+                if (currentUser == null)
                 {
-                    throw new ArgumentException($"Current user is null or does not have admin status.");
+                    throw new ArgumentException($"Current user is null.");
                 }
 
                 var groups = await _profileRepository.GetGroups(currentUser.Groups.ToArray());

@@ -45,9 +45,9 @@ namespace Juno.Chat
             {
                 lock (ParticipantsConnectionLock)
                 {
-                    var currentUserProfileId = _profileRepository.GetCurrentProfileIdByAuth0Id(Context.UserIdentifier).Result;
+                    var currentUser = _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier).Result;
 
-                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == currentUserProfileId);
+                    var oldConnectedParticipants = AllConnectedParticipants.Where(x => x.Participant.Id == currentUser.ProfileId);
 
                     if (!oldConnectedParticipants.Any())
                     {
@@ -59,16 +59,66 @@ namespace Juno.Chat
                             },
                             Participant = new ChatParticipantViewModel()
                             {
-                                DisplayName = userName,
-                                Id = currentUserProfileId,
-                                Status = 0
+                                ParticipantType = ChatParticipantTypeEnum.User,
+                                Id = currentUser.ProfileId,
+                                DisplayName = currentUser.Name,
+                                Initials = currentUser.Avatar.Initials,
+                                InitialsColour = currentUser.Avatar.InitialsColour,
+                                CircleColour = currentUser.Avatar.CircleColour,
+                                Status = oldConnectedParticipants.Any() ? 0 : 3
                             }
                         });
                     }
 
+                    var groups = _profileRepository.GetGroups(currentUser.Groups.ToArray()).Result;
+
+                    foreach (var group in groups)
+                    {
+                        var groupParticipant = AllGroupParticipants.Find(x => x.Id == group.GroupId);
+
+                        if (groupParticipant == null)
+                        {
+                            groupParticipant = new GroupChatParticipantViewModel()
+                            {
+                                ParticipantType = ChatParticipantTypeEnum.Group,
+                                Id = group.GroupId,
+                                DisplayName = group.Name,
+                                Initials = group.Avatar.Initials,
+                                InitialsColour = group.Avatar.InitialsColour,
+                                CircleColour = group.Avatar.CircleColour,
+                                Status = 3, // TODO: Look in oldConnectedParticipants if any group members are there
+                                ChattingTo = new List<ChatParticipantViewModel>()
+                            };
+
+                            AllGroupParticipants.Add(groupParticipant);
+
+                            groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                            {
+                                Id = currentUser.ProfileId   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
+                            });
+
+                            AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                            {
+                                Metadata = new ParticipantMetadataViewModel()
+                                {
+                                    TotalUnreadMessages = 0
+                                },
+                                Participant = groupParticipant
+                            });
+                        }
+                        else
+                        {
+                            groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                            {
+                                Id = currentUser.ProfileId,   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
+                                Status = 0
+                            });
+                        }                        
+                    }
+
                     // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                     // You should most likely use another ID on your application
-                    Clients.Caller.SendAsync("generatedUserId", currentUserProfileId);
+                    Clients.Caller.SendAsync("generatedUserId", currentUser.ProfileId);
 
                     Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
                 }
@@ -79,81 +129,113 @@ namespace Juno.Chat
             }
         }
 
-        public async Task GroupCreated(GroupChatParticipantViewModel group)       // TODO: This need to save group to DB
-        {
-            try
-            {
-                AllGroupParticipants.Add(group);
+        //public async Task GroupCreated(GroupChatParticipantViewModel group)       // TODO: This need to save group to DB
+        //{
+        //    try
+        //    {
+        //        AllGroupParticipants.Add(group);
 
-                // Pushing the current user to the "chatting to" list to keep track of who's created the group as well.
-                // In your application you'll probably want a more sofisticated group persistency and management
-                group.ChattingTo.Add(new ChatParticipantViewModel()
-                {
-                    Id = Context.ConnectionId
-                });
+        //        // Pushing the current user to the "chatting to" list to keep track of who's created the group as well.
+        //        // In your application you'll probably want a more sofisticated group persistency and management
+        //        group.ChattingTo.Add(new ChatParticipantViewModel()
+        //        {
+        //            Id = Context.ConnectionId
+        //        });
 
-                AllConnectedParticipants.Add(new ParticipantResponseViewModel()
-                {
-                    Metadata = new ParticipantMetadataViewModel()
-                    {
-                        TotalUnreadMessages = 0
-                    },
-                    Participant = group
-                });
+        //        AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+        //        {
+        //            Metadata = new ParticipantMetadataViewModel()
+        //            {
+        //                TotalUnreadMessages = 0
+        //            },
+        //            Participant = group
+        //        });
 
-                Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
-            }
-            catch
-            {
-                throw;
-            }
-        }
+        //        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
 
         public async Task SendMessage(MessageModel message)
         {
             try
             {
-                var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
-
-                var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(message.ToId);
-                var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
-
-                // If currentUser is blocked on Grouplist then do not go any further.
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
+                // Look into using enums instead of string. This is ugly :)
+                if(message.ParticipantType.ToLower() == "group") 
                 {
-                    message.ToId = destinataryProfile.ProfileId;
-                    message.ToName = destinataryProfile.Name;
-                    message.FromName = currentUser.Name;
-                    message.DoNotDelete = false;
+                    var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
 
-                    if (sender != null)
+                    var destinataryGroup = await _profileRepository.GetGroup(message.ToId);
+                    var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
+
+                    // If currentUser is blocked on Grouplist then do not go any further.
+                    if (!destinataryGroup.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
                     {
-                        var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToId).FirstOrDefault();      // TODO: Need to add users to groups and create groups via GroupCreated
+                        message.ToId = destinataryGroup.GroupId;
+                        message.ToName = destinataryGroup.Name;
+                        message.FromName = currentUser.Name;
+                        message.DoNotDelete = false;
 
-                        if (groupDestinatary != null)
+                        if (sender != null)
                         {
-                            // Notify all users in the group except the sender
-                            var usersInGroupToNotify = AllConnectedParticipants
-                                                       .Where(p => p.Participant.Id != sender.Participant.Id
-                                                              && groupDestinatary.ChattingTo.Any(g => g.Id == p.Participant.Id)
-                                                       )
-                                                       .Select(g => g.Participant.Id);
+                            var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToId).FirstOrDefault();      // TODO: Need to add users to groups and create groups via GroupCreated
 
-                            await Clients.Clients(usersInGroupToNotify.ToList()).SendAsync("messageReceived", groupDestinatary, message);
+                            if (groupDestinatary != null)
+                            {
+                                // Notify all users in the group except the sender
+                                var usersInGroupToNotify = AllConnectedParticipants
+                                                           .Where(p => p.Participant.Id != sender.Participant.Id
+                                                                  && groupDestinatary.ChattingTo.Any(g => g.Id == p.Participant.Id)
+                                                           )
+                                                           .Select(g => g.Participant.Id);
+
+                                await Clients.Groups(usersInGroupToNotify.ToList()).SendAsync("messageReceived", groupDestinatary, message);
+                            }
+                            else
+                            {
+                                await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
+                            }
                         }
-                        else
+
+                        // Messages should be encrypted before storing to database.
+                        var encryptedMessage = _cryptography.Encrypt(message.Message);
+                        message.Message = encryptedMessage;
+
+                        await _profileRepository.SaveMessage(message);
+                        //await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);        // TODO: Group should be notified of new messages or is this already done?
+                    }
+                }
+                else
+                {
+                    var sender = AllConnectedParticipants.Find(x => x.Participant.Id == message.FromId);
+
+                    var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(message.ToId);
+                    var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
+
+                    // If currentUser is blocked on Grouplist then do not go any further.
+                    if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
+                    {
+                        message.ToId = destinataryProfile.ProfileId;
+                        message.ToName = destinataryProfile.Name;
+                        message.FromName = currentUser.Name;
+                        message.DoNotDelete = false;
+
+                        if (sender != null)
                         {
                             await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
                         }
+
+                        // Messages should be encrypted before storing to database.
+                        var encryptedMessage = _cryptography.Encrypt(message.Message);
+                        message.Message = encryptedMessage;
+
+                        await _profileRepository.SaveMessage(message);
+                        await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);        // TODO: Group should be notified of new messages or is this already done?
                     }
-
-                    // Messages should be encrypted before storing to database.
-                    var encryptedMessage = _cryptography.Encrypt(message.Message);
-                    message.Message = encryptedMessage;
-
-                    await _profileRepository.SaveMessage(message);
-                    await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);        // TODO: Group should be notified of new messages or is this already done?
-                }
+                }                
             }
             catch
             {

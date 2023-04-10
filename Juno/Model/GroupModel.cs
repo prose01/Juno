@@ -18,5 +18,7 @@ namespace Juno.Model
         public AvatarModel Avatar { get; set; }
 
         public List<string> Members { get; set; }
+
+        public List<ChatMember> ChatMemberslist { internal get; set; }
     }
 }

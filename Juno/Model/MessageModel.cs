@@ -28,5 +28,8 @@ namespace Juno.Model
         public DateTime? DateSeen { get; set; }
 
         public bool DoNotDelete { get; set; }
-    }
+
+        [BsonIgnore]
+        public string ParticipantType { get; set; }
+}
 }

@@ -15,6 +15,7 @@ namespace Juno.Interfaces
         Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile);
         Task<IEnumerable<MessageModel>> GetMessages(string currentUserProfileId, string profileId);
         Task<IEnumerable<MessageModel>> GetGroupMessages(string groupId);
+        Task<GroupModel> GetGroup(string groupId);
         Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds);
         Task MessagesSeen(ObjectId messagesId);
         int TotalUnreadMessages(string chatMemberId, string profileId);

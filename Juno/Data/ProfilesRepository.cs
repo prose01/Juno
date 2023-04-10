@@ -149,6 +149,23 @@ namespace Juno.Data
             }
         }
 
+        public async Task<GroupModel> GetGroup(string groupId)
+        {
+            try
+            {
+                var filter = Builders<GroupModel>
+                                .Filter.Eq(g => g.GroupId, groupId);
+
+                return await _context.Groups
+                    .Find(filter)
+                    .FirstOrDefaultAsync();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds)
         {
             try
@@ -156,11 +173,9 @@ namespace Juno.Data
                 var filter = Builders<GroupModel>
                                 .Filter.In(g => g.GroupId, groupIds);
 
-                var tt = await _context.Groups
+                return await _context.Groups
                     .Find(filter)
                     .ToListAsync();
-
-                return tt;
             }
             catch
             {
