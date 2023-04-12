@@ -136,6 +136,9 @@ namespace Juno.Data
         {
             try
             {
+                if (string.IsNullOrEmpty(groupId))
+                    return null;
+
                 var query = from m in _context.Messages.AsQueryable()
                             where m.ToId == groupId
                             orderby m.DateSent ascending
@@ -153,6 +156,9 @@ namespace Juno.Data
         {
             try
             {
+                if(string.IsNullOrEmpty(groupId))
+                    return null;
+
                 var filter = Builders<GroupModel>
                                 .Filter.Eq(g => g.GroupId, groupId);
 
@@ -170,6 +176,9 @@ namespace Juno.Data
         {
             try
             {
+                if(groupIds == null || groupIds.Length == 0) 
+                    return null;
+
                 var filter = Builders<GroupModel>
                                 .Filter.In(g => g.GroupId, groupIds);
 

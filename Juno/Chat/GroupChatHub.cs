@@ -70,57 +70,61 @@ namespace Juno.Chat
                         });
                     }
 
-                    var groups = _profileRepository.GetGroups(currentUser.Groups.ToArray()).Result;
+                    var groups = _profileRepository.GetGroups(currentUser.Groups?.ToArray()).Result;
 
-                    foreach (var group in groups)
+                    if (groups != null)
                     {
-                        var groupParticipant = AllGroupParticipants.Find(x => x.Id == group.GroupId);
-
-                        if (groupParticipant == null)
+                        foreach (var group in groups)
                         {
-                            groupParticipant = new GroupChatParticipantViewModel()
-                            {
-                                ParticipantType = ChatParticipantTypeEnum.Group,
-                                Id = group.GroupId,
-                                DisplayName = group.Name,
-                                Initials = group.Avatar.Initials,
-                                InitialsColour = group.Avatar.InitialsColour,
-                                CircleColour = group.Avatar.CircleColour,
-                                Status = 3, // TODO: Look in oldConnectedParticipants if any group members are there
-                                ChattingTo = new List<ChatParticipantViewModel>()
-                            };
+                            var groupParticipant = AllGroupParticipants.Find(x => x.Id == group.GroupId);
 
-                            AllGroupParticipants.Add(groupParticipant);
-
-                            groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                            if (groupParticipant == null)
                             {
-                                Id = currentUser.ProfileId   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
-                            });
-
-                            AllConnectedParticipants.Add(new ParticipantResponseViewModel()
-                            {
-                                Metadata = new ParticipantMetadataViewModel()
+                                groupParticipant = new GroupChatParticipantViewModel()
                                 {
-                                    TotalUnreadMessages = 0
-                                },
-                                Participant = groupParticipant
-                            });
-                        }
-                        else
-                        {
-                            groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                                    ParticipantType = ChatParticipantTypeEnum.Group,
+                                    Id = group.GroupId,
+                                    DisplayName = group.Name,
+                                    Initials = group.Avatar.Initials,
+                                    InitialsColour = group.Avatar.InitialsColour,
+                                    CircleColour = group.Avatar.CircleColour,
+                                    Status = 3, // TODO: Look in oldConnectedParticipants if any group members are there
+                                    ChattingTo = new List<ChatParticipantViewModel>()
+                                };
+
+                                AllGroupParticipants.Add(groupParticipant);
+
+                                groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                                {
+                                    Id = currentUser.ProfileId,   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
+                                    Status = 0
+                                });
+
+                                AllConnectedParticipants.Add(new ParticipantResponseViewModel()
+                                {
+                                    Metadata = new ParticipantMetadataViewModel()
+                                    {
+                                        TotalUnreadMessages = 0
+                                    },
+                                    Participant = groupParticipant
+                                });
+                            }
+                            else
                             {
-                                Id = currentUser.ProfileId,   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
-                                Status = 0
-                            });
-                        }                        
-                    }
+                                groupParticipant.ChattingTo.Add(new ChatParticipantViewModel()
+                                {
+                                    Id = currentUser.ProfileId,   // Use the same Participant as earlier line 61. The user should be added to the groups participants list (AllGroupParticipants) and later the groups should be added to the over participant list (AllConnectedParticipants)
+                                    Status = 0
+                                });
+                            }
+                        }
+                    }                    
 
                     // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                     // You should most likely use another ID on your application
                     Clients.Caller.SendAsync("generatedUserId", currentUser.ProfileId);
 
-                    Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
+                    //Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);        // TODO: This seems to cause users to see other peoples groups!
                 }
             }
             catch
@@ -181,7 +185,7 @@ namespace Juno.Chat
 
                         if (sender != null)
                         {
-                            var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToId).FirstOrDefault();      // TODO: Need to add users to groups and create groups via GroupCreated
+                            var groupDestinatary = AllGroupParticipants.Where(x => x.Id == message.ToId).FirstOrDefault();
 
                             if (groupDestinatary != null)
                             {
@@ -194,10 +198,6 @@ namespace Juno.Chat
 
                                 await Clients.Groups(usersInGroupToNotify.ToList()).SendAsync("messageReceived", groupDestinatary, message);
                             }
-                            else
-                            {
-                                await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
-                            }
                         }
 
                         // Messages should be encrypted before storing to database.
@@ -205,7 +205,6 @@ namespace Juno.Chat
                         message.Message = encryptedMessage;
 
                         await _profileRepository.SaveMessage(message);
-                        //await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);        // TODO: Group should be notified of new messages or is this already done?
                     }
                 }
                 else
@@ -225,6 +224,7 @@ namespace Juno.Chat
 
                         if (sender != null)
                         {
+                            await Clients.Group(message.ToId).SendAsync("updateCurrentUserSubject");
                             await Clients.Group(message.ToId).SendAsync("messageReceived", sender.Participant, message);
                         }
 

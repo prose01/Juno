@@ -74,31 +74,34 @@ namespace Juno.Controllers
                     });
                 }
 
-                var groups = await _profileRepository.GetGroups(item.Groups.ToArray());
+                var groups = await _profileRepository.GetGroups(item.Groups?.ToArray());
 
-                foreach (var group in groups)
+                if(groups != null)
                 {
-                    var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id));
-                    var set2 = new HashSet<string>(group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
-                    set1.IntersectWith(set2);
-
-                    var participantGroup = new ChatParticipantViewModel()
+                    foreach (var group in groups)
                     {
-                        ParticipantType = ChatParticipantTypeEnum.Group,
-                        Id = group.GroupId,
-                        DisplayName = group.Name,
-                        Initials = group.Avatar.Initials,
-                        InitialsColour = group.Avatar.InitialsColour,
-                        CircleColour = group.Avatar.CircleColour,
-                        Status = set1.Any() ? 0 : 3 
-                    };
+                        var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id));
+                        var set2 = new HashSet<string>(group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
+                        set1.IntersectWith(set2);
 
-                    participantResponses.Add(new ParticipantResponseViewModel()
-                    {
-                        Participant = participantGroup,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
-                    });
-                }
+                        var participantGroup = new ChatParticipantViewModel()
+                        {
+                            ParticipantType = ChatParticipantTypeEnum.Group,
+                            Id = group.GroupId,
+                            DisplayName = group.Name,
+                            Initials = group.Avatar.Initials,
+                            InitialsColour = group.Avatar.InitialsColour,
+                            CircleColour = group.Avatar.CircleColour,
+                            Status = set1.Any() ? 0 : 3
+                        };
+
+                        participantResponses.Add(new ParticipantResponseViewModel()
+                        {
+                            Participant = participantGroup,
+                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
+                        });
+                    }
+                }                
 
                 return participantResponses;
             }
