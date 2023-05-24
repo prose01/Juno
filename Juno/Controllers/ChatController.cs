@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -80,9 +81,15 @@ namespace Juno.Controllers
                 {
                     foreach (var group in groups)
                     {
+                        if (group.GroupMemberslist.Where(x => x.ProfileId == item.ProfileId && x.Blocked == true).Count() > 0)
+                            continue;
+
                         var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id));
-                        var set2 = new HashSet<string>(group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
+                        var set2 = new HashSet<string>(group.GroupMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
                         set1.IntersectWith(set2);
+
+                        //var list1 = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id).Where(i => group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId).Contains(i)).ToList();
+
 
                         var participantGroup = new ChatParticipantViewModel()
                         {

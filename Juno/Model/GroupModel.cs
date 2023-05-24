@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 
 namespace Juno.Model
@@ -10,6 +11,8 @@ namespace Juno.Model
         public ObjectId _id { get; set; }
 
         public string GroupId { get; set; }
+
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
         public string Name { get; set; }
 
