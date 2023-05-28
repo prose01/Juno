@@ -267,8 +267,10 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.Or(filters);
 
+                SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Descending(m => m.DateSent);
+
                 return await _context.Messages
-                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
+                            .Find(combineFilters).Sort(sortDefinition).Skip(skip).Limit(limit).ToListAsync();
             }
             catch
             {
@@ -286,10 +288,13 @@ namespace Juno.Data
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromId));
 
                 if (chatFilter.FromName != null)
-                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromName));
+                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.FromName, new BsonRegularExpression(chatFilter.FromName, "i")));
 
                 if (chatFilter.ToId != null)
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, chatFilter.ToId));
+
+                if (chatFilter.ToName != null)
+                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.ToName, new BsonRegularExpression(chatFilter.ToName, "i")));
 
                 // For now we cannot filter on message as it is stored encrypted in the database.
                 //if (chatFilter.Message != null)
@@ -319,8 +324,10 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
+                SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Descending(m => m.DateSent);
+
                 return await _context.Messages
-                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
+                            .Find(combineFilters).Sort(sortDefinition).Skip(skip).Limit(limit).ToListAsync();
             }
             catch
             {

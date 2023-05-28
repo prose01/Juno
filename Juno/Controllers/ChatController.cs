@@ -251,7 +251,7 @@ namespace Juno.Controllers
 
                     if (message.ToId == profileId && message.DateSeen == null)
                     {
-                        await _profileRepository.MessagesSeen(message._id);
+                        await _profileRepository.MessagesSeen(message._id); // TODO: What is this for? Why do the Profile need to know we have seen the massage?
                     }
                 }
 
@@ -288,7 +288,19 @@ namespace Juno.Controllers
 
                 var skip = parameterFilter.PageIndex == 0 ? parameterFilter.PageIndex : parameterFilter.PageIndex * parameterFilter.PageSize;
 
-                return await _profileRepository.GetChatsByFilter(requestBody.ChatFilter, skip, parameterFilter.PageSize) ?? throw new ArgumentException($"Cannot find any matching chats.", nameof(requestBody.ChatFilter));
+                var messages = await _profileRepository.GetChatsByFilter(requestBody.ChatFilter, skip, parameterFilter.PageSize) ?? throw new ArgumentException($"Cannot find any matching chats.", nameof(requestBody.ChatFilter));
+
+                foreach (var message in messages)
+                {
+                    message.Message = _cryptography.Decrypt(message.Message);
+
+                    //if (message.ToId == profileId && message.DateSeen == null)
+                    //{
+                    //    await _profileRepository.MessagesSeen(message._id);
+                    //}
+                }
+
+                return messages;
 
             }
             catch
