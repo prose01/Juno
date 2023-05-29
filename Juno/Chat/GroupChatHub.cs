@@ -178,6 +178,7 @@ namespace Juno.Chat
                     // If currentUser is blocked on Grouplist then do not go any further.
                     if (!destinataryGroup.GroupMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
                     {
+                        message.MessageType = MessageType.Group;
                         message.ToId = destinataryGroup.GroupId;
                         message.ToName = destinataryGroup.Name;
                         message.FromName = currentUser.Name;
@@ -217,6 +218,7 @@ namespace Juno.Chat
                     // If currentUser is blocked on Grouplist then do not go any further.
                     if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
                     {
+                        message.MessageType = MessageType.PrivateMessage;
                         message.ToId = destinataryProfile.ProfileId;
                         message.ToName = destinataryProfile.Name;
                         message.FromName = currentUser.Name;

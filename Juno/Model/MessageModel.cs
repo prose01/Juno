@@ -10,6 +10,9 @@ namespace Juno.Model
         [BsonId]
         public ObjectId _id { get; set; }
 
+        [BsonRepresentation(BsonType.String)]
+        public MessageType? MessageType { get; set; }
+
         public string FromId { get; set; }
 
         public string FromName { get; set; }

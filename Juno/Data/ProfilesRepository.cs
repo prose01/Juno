@@ -284,6 +284,9 @@ namespace Juno.Data
             {
                 List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
+                if (chatFilter.MessageType != MessageType.NotChosen)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.MessageType, chatFilter.MessageType));
+
                 if (chatFilter.FromId != null)
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromId));
 

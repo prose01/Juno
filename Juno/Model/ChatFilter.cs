@@ -17,6 +17,8 @@ namespace Juno.Model
         [DataType(DataType.DateTime)]
         public DateTime? DateSeenEnd { get; set; }
 
+        public MessageType MessageType { get; set; }
+
         public string FromId { get; set; }
 
         public string FromName { get; set; }
