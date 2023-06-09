@@ -9,9 +9,17 @@ namespace Juno.Model
         #endregion
 
         public string Auth0Id { internal get; set; }
+
         public override string ProfileId { get; set; }
+
         public bool Admin { get; set; } = false;
+
         public override string Name { get; set; }
+
         public override bool Contactable { get; set; } = true;
+
+        public override AvatarModel Avatar { get; set; }
+
+        public List<string> Groups { get; set; }
     }
 }

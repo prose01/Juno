@@ -1,13 +1,16 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace Juno.Model
 {
-    public class ChatMember
+    public class GroupMember
     {
         public string ProfileId { get; set; }
 
         public string Name { get; set; }
 
         public bool Blocked { get; set; }
+
+        public Dictionary<string, DateTime> Complains { internal get; set; }
     }
 }

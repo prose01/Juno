@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Juno.Data
@@ -96,7 +97,7 @@ namespace Juno.Data
         public async Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile)
         {
             try
-            {                
+            {
                 if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId))
                 {
                     var filter = Builders<Profile>
@@ -124,6 +125,66 @@ namespace Juno.Data
                             select m;
 
                 return await Task.FromResult(query.ToList());
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<MessageModel>> GetGroupMessages(string groupId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(groupId))
+                    return null;
+
+                var query = from m in _context.Messages.AsQueryable()
+                            where m.ToId == groupId
+                            orderby m.DateSent ascending
+                            select m;
+
+                return await Task.FromResult(query.ToList());
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<GroupModel> GetGroup(string groupId)
+        {
+            try
+            {
+                if(string.IsNullOrEmpty(groupId))
+                    return null;
+
+                var filter = Builders<GroupModel>
+                                .Filter.Eq(g => g.GroupId, groupId);
+
+                return await _context.Groups
+                    .Find(filter)
+                    .FirstOrDefaultAsync();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds)
+        {
+            try
+            {
+                if(groupIds == null || groupIds.Length == 0) 
+                    return null;
+
+                var filter = Builders<GroupModel>
+                                .Filter.In(g => g.GroupId, groupIds);
+
+                return await _context.Groups
+                    .Find(filter)
+                    .ToListAsync();
             }
             catch
             {
@@ -172,6 +233,27 @@ namespace Juno.Data
             }
         }
 
+        /// <summary>Gets profile Avatars by identifiers.</summary>
+        /// <param name="profileId">The profile identifiers.</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Profile>> GetProfileAvatarrByIds(string[] profileIds)
+        {
+            try
+            {
+                var filter = Builders<Profile>
+                                .Filter.In(p => p.ProfileId, profileIds);
+
+                return await _context.Profiles
+                    .Find(filter)
+                    .Project<Profile>(GetAvatar())
+                    .ToListAsync();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
 
         public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit)
         {
@@ -185,8 +267,10 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.Or(filters);
 
+                SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Descending(m => m.DateSent);
+
                 return await _context.Messages
-                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
+                            .Find(combineFilters).Sort(sortDefinition).Skip(skip).Limit(limit).ToListAsync();
             }
             catch
             {
@@ -200,14 +284,20 @@ namespace Juno.Data
             {
                 List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
+                if (chatFilter.MessageType != MessageType.NotChosen)
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.MessageType, chatFilter.MessageType));
+
                 if (chatFilter.FromId != null)
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromId));
 
                 if (chatFilter.FromName != null)
-                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatFilter.FromName));
+                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.FromName, new BsonRegularExpression(chatFilter.FromName, "i")));
 
                 if (chatFilter.ToId != null)
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, chatFilter.ToId));
+
+                if (chatFilter.ToName != null)
+                    filters.Add(Builders<MessageModel>.Filter.Regex(m => m.ToName, new BsonRegularExpression(chatFilter.ToName, "i")));
 
                 // For now we cannot filter on message as it is stored encrypted in the database.
                 //if (chatFilter.Message != null)
@@ -237,8 +327,10 @@ namespace Juno.Data
 
                 var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
+                SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Descending(m => m.DateSent);
+
                 return await _context.Messages
-                            .Find(combineFilters).Skip(skip).Limit(limit).ToListAsync();
+                            .Find(combineFilters).Sort(sortDefinition).Skip(skip).Limit(limit).ToListAsync();
             }
             catch
             {
@@ -341,6 +433,49 @@ namespace Juno.Data
                 "EatingHabits: 0, " +
                 "ClotheStyle: 0, " +
                 "BodyArt: 0, " +
+                "}";
+
+            return projection;
+        }
+
+        private ProjectionDefinition<Profile> GetAvatar()
+        {
+            ProjectionDefinition<Profile> projection = "{ " +
+                "_id: 0, " +
+                "Auth0Id: 0, " +
+                "Admin: 0, " +
+                "Name: 0, " +
+                "CreatedOn: 0, " +
+                "UpdatedOn: 0, " +
+                "LastActive: 0, " +
+                "Age: 0, " +
+                "Height: 0, " +
+                "Contactable: 0, " +
+                "Description: 0, " +
+                "Images: 0, " +
+                "Tags: 0, " +
+                "Body: 0, " +
+                "SmokingHabits: 0, " +
+                "HasChildren: 0, " +
+                "WantChildren: 0, " +
+                "HasPets: 0, " +
+                "LivesIn: 0, " +
+                "Education: 0, " +
+                "EducationStatus: 0, " +
+                "EmploymentStatus: 0, " +
+                "SportsActivity: 0, " +
+                "EatingHabits: 0, " +
+                "ClotheStyle: 0, " +
+                "BodyArt: 0, " +
+                "Gender: 0, " +
+                "Seeking: 0, " +
+                "Bookmarks: 0, " +
+                "ChatMemberslist: 0, " +
+                "ProfileFilter: 0, " +
+                "IsBookmarked: 0, " +
+                "Languagecode: 0, " +
+                "Visited: 0, " +
+                "Likes: 0, " +
                 "}";
 
             return projection;
