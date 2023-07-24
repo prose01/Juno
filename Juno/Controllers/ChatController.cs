@@ -38,7 +38,7 @@ namespace Juno.Controllers
             try
             {
                 string[] profileIds = item.ChatMemberslist.Select(p => p.ProfileId).ToArray();
-                var avatars = await _profileRepository.GetProfileAvatarrByIds(profileIds);
+                var avatars = await _profileRepository.GetProfileAvatarByIds(profileIds);
 
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 

@@ -19,7 +19,7 @@ namespace Juno.Interfaces
         Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds);
         Task MessagesSeen(ObjectId messagesId);
         int TotalUnreadMessages(string chatMemberId, string profileId);
-        Task<IEnumerable<Profile>> GetProfileAvatarrByIds(string[] profileIds);
+        Task<IEnumerable<Profile>> GetProfileAvatarByIds(string[] profileIds);
         Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit);
         Task<IEnumerable<MessageModel>> GetChatsByFilter(ChatFilter chatFilter, int skip, int limit);
         Task DoNotDelete(MessageModel[] messages, bool doNotDelete);

@@ -236,7 +236,7 @@ namespace Juno.Data
         /// <summary>Gets profile Avatars by identifiers.</summary>
         /// <param name="profileId">The profile identifiers.</param>
         /// <returns></returns>
-        public async Task<IEnumerable<Profile>> GetProfileAvatarrByIds(string[] profileIds)
+        public async Task<IEnumerable<Profile>> GetProfileAvatarByIds(string[] profileIds)
         {
             try
             {
