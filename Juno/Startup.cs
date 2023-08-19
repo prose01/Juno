@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Juno
@@ -38,7 +37,7 @@ namespace Juno
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
-                    builder => builder.WithOrigins("http://localhost:4200")
+                    builder => builder.WithOrigins("http://localhost:4200", "http://localhost:4200/manifest.webmanifest")
                                 .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
                                 .AllowAnyHeader()
                                 .AllowCredentials()
@@ -71,24 +70,6 @@ namespace Juno
             {
                 options.Authority = domain;
                 options.Audience = Configuration["Auth0_ApiIdentifier"];
-
-                //options.Events = new JwtBearerEvents
-                //{
-                //    OnMessageReceived = context =>
-                //    {
-                //        var accessToken = context.Request.Query["access_token"];
-
-                //        // If the request is for our hub...
-                //        var path = context.HttpContext.Request.Path;
-                //        if (!string.IsNullOrEmpty(accessToken) &&
-                //            (path.StartsWithSegments("/chatHub")))
-                //        {
-                //            // Read the token out of the query string
-                //            context.Token = accessToken;
-                //        }
-                //        return Task.CompletedTask;
-                //    }
-                //};
             });
             
             // register the scope authorization handler
@@ -109,28 +90,28 @@ namespace Juno
                 {
                     Version = "v1",
                     Title = "Juno API",
-                    Description = "A simple example Juno API",
-                    //TermsOfService = "None",
-                    //Contact = new Contact { Name = "Peter Rose", Email = "", Url = "http://Juno.com/" },
-                    //License = new Swashbuckle.AspNetCore.Swagger.License { Name = "Use under LICX", Url = "http://Juno.com" }
+                    Description = "A simple example Juno API"
                 });
 
-                // Define the ApiKey scheme that's in use (i.e. Implicit Flow)
-                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                var securitySchema = new OpenApiSecurityScheme
                 {
-                    Type = SecuritySchemeType.ApiKey,
-                    Flows = new OpenApiOAuthFlows
+                    Description = "Using the Authorization header with the Bearer scheme.",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    Reference = new OpenApiReference
                     {
-                        Implicit = new OpenApiOAuthFlow
-                        {
-                            AuthorizationUrl = new Uri("/auth-server/connect/authorize", UriKind.Relative),
-                            Scopes = new Dictionary<string, string>
-                            {
-                                { "readAccess", "Access read operations" },
-                                { "writeAccess", "Access write operations" }
-                            }
-                        }
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
                     }
+                };
+
+                c.AddSecurityDefinition("Bearer", securitySchema);
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    { securitySchema, new[] { "Bearer" } }
                 });
             });
 
@@ -140,8 +121,6 @@ namespace Juno
                 options.Database = Configuration.GetSection("Mongo_Database").Value;
                 options.auth0Id = Configuration.GetSection("Auth0_Claims_nameidentifier").Value;
             });
-
-            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -154,7 +133,6 @@ namespace Juno
             {
                 app.UseDeveloperExceptionPage();
 
-
                 // Enable middleware to serve generated Swagger as a JSON endpoint.
                 app.UseSwagger();
 
@@ -163,16 +141,9 @@ namespace Juno
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Juno V1");
                 });
-            }
 
-            // Shows UseCors with CorsPolicyBuilder.
-            app.UseCors("CorsPolicy");
-            //app.UseCors(builder =>
-            //    builder.WithOrigins("http://localhost:4200")
-            //        .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD")
-            //        .AllowAnyHeader()
-            //        .AllowCredentials()
-            //);
+                app.UseCors("CorsPolicy");
+            }
 
             app.UseHttpsRedirection();
             

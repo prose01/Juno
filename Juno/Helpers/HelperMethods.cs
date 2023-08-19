@@ -2,7 +2,6 @@
 using Juno.Model;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ namespace Juno.Helpers
     {
         private readonly IProfilesRepository _profileRepository;
         private readonly string _nameidentifier;
-        public List<MessageModel> mockMessageHistorylist { get; set; }
 
         public HelperMethods(IProfilesRepository profileRepository, IOptions<Settings> settings)
         {
