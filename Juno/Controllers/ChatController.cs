@@ -37,7 +37,6 @@ namespace Juno.Controllers
             try
             {
                 string[] profileIds = item.ChatMemberslist.Select(p => p.ProfileId).ToArray();
-                var avatars = await _profileRepository.GetProfileAvatarByIds(profileIds);
 
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
@@ -47,16 +46,14 @@ namespace Juno.Controllers
                     {
                         var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
 
-                        var avatarInfo = avatars.Where(p => p.ProfileId == profile.ProfileId).ToList();
-
                         chatParticipants.Add(new ChatParticipantViewModel()
                         {
                             ParticipantType = ChatParticipantTypeEnum.User,
                             Id = profile.ProfileId,
                             DisplayName = profile.Name,
-                            Initials = avatarInfo[0].Avatar.Initials,
-                            InitialsColour = avatarInfo[0].Avatar.InitialsColour,
-                            CircleColour = avatarInfo[0].Avatar.CircleColour,
+                            Initials = profile.Avatar.Initials, 
+                            InitialsColour = profile.Avatar.InitialsColour,
+                            CircleColour = profile.Avatar.CircleColour,
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
                     }
