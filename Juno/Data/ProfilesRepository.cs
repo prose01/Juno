@@ -9,18 +9,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Juno.Data
 {
     public class ProfilesRepository : IProfilesRepository
     {
         private readonly ProfileContext _context = null;
-        private readonly int _deleteMessagesOlderThan;
+        //private readonly int _deleteMessagesOlderThan;
+        private readonly int _maxMessages;
 
         public ProfilesRepository(IOptions<Settings> settings, IConfiguration config)
         {
             _context = new ProfileContext(settings);
-            _deleteMessagesOlderThan = config.GetValue<int>("DeleteMessagesOlderThan");
+            //_deleteMessagesOlderThan = config.GetValue<int>("DeleteMessagesOlderThan");
+            _maxMessages = config.GetValue<int>("DeleteMaxMessageNumber");
         }
 
         /// <summary>Gets the currentUser profileId by auth0Id.</summary>
@@ -86,6 +89,31 @@ namespace Juno.Data
         {
             try
             {
+                var filter = Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId);
+                var count = _context.Messages.CountDocuments(filter);
+
+                if (count >= _maxMessages)
+                {
+                    List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>
+                    {
+                        Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId),
+
+                        Builders<MessageModel>.Filter.Ne(m => m.DoNotDelete, true),
+                    };
+
+                    var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                    SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Ascending(m => m.DateSent);
+
+                    List<MessageModel> messageToBeDeleted = await _context.Messages.Find(combineFilters).Sort(sortDefinition).Limit(1).ToListAsync();
+
+                    if (messageToBeDeleted != null && messageToBeDeleted.Count > 0)
+                    {
+                        await _context.Messages.DeleteOneAsync(m => m._id == messageToBeDeleted.First()._id);
+                    }
+
+                }
+
                 await _context.Messages.InsertOneAsync(message);
             }
             catch
@@ -352,27 +380,27 @@ namespace Juno.Data
 
         #region Maintenance
 
-        /// <summary>Deletes Messages that are more than 30 days old.</summary>
-        /// <returns></returns>
-        public async Task<DeleteResult> DeleteOldMessages()
-        {
-            try
-            {
-                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+        ///// <summary>Deletes Messages that are more than 30 days old.</summary>
+        ///// <returns></returns>
+        //public async Task<DeleteResult> DeleteOldMessages()
+        //{
+        //    try
+        //    {
+        //        List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
-                filters.Add(Builders<MessageModel>.Filter.Gt(m => m.DateSeen, DateTime.Now.AddDays(-_deleteMessagesOlderThan)));
+        //        filters.Add(Builders<MessageModel>.Filter.Gt(m => m.DateSeen, DateTime.Now.AddDays(-_deleteMessagesOlderThan)));
 
-                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, false));
+        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, false));
 
-                var combineFilters = Builders<MessageModel>.Filter.And(filters);
+        //        var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
-                return await _context.Messages.DeleteManyAsync(combineFilters);
-            }
-            catch
-            {
-                throw;
-            }
-        }
+        //        return await _context.Messages.DeleteManyAsync(combineFilters);
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
 
         #endregion
 

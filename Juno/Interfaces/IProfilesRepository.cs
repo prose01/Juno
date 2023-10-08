@@ -22,6 +22,6 @@ namespace Juno.Interfaces
         Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit);
         Task<IEnumerable<MessageModel>> GetChatsByFilter(ChatFilter chatFilter, int skip, int limit);
         Task DoNotDelete(MessageModel[] messages, bool doNotDelete);
-        Task<DeleteResult> DeleteOldMessages();
+        //Task<DeleteResult> DeleteOldMessages();
     }
 }
