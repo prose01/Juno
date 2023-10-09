@@ -92,6 +92,7 @@ namespace Juno.Data
                 var filter = Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId);
                 var count = _context.Messages.CountDocuments(filter);
 
+                // Check if Profile has reached max number of message.
                 if (count >= _maxMessages)
                 {
                     List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>
@@ -107,14 +108,18 @@ namespace Juno.Data
 
                     List<MessageModel> messageToBeDeleted = await _context.Messages.Find(combineFilters).Sort(sortDefinition).Limit(1).ToListAsync();
 
+                    // If we can delete a message, then delete it and insert new message otherwise ignore new message. 
                     if (messageToBeDeleted != null && messageToBeDeleted.Count > 0)
                     {
                         await _context.Messages.DeleteOneAsync(m => m._id == messageToBeDeleted.First()._id);
+
+                        await _context.Messages.InsertOneAsync(message);
                     }
-
                 }
-
-                await _context.Messages.InsertOneAsync(message);
+                else
+                {
+                    await _context.Messages.InsertOneAsync(message);
+                }
             }
             catch
             {
