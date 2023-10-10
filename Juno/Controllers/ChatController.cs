@@ -38,10 +38,12 @@ namespace Juno.Controllers
             {
                 string[] profileIds = item.ChatMemberslist.Select(p => p.ProfileId).ToArray();
 
-                List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
+                List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
                 if (item.ChatMemberslist.Count > 0)
                 {
+                    List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
+
                     foreach (var profile in item.ChatMemberslist)
                     {
                         var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
@@ -57,24 +59,24 @@ namespace Juno.Controllers
                             Status = oldConnectedParticipants.Any() ? 0 : 3
                         });
                     }
-                }
 
-                List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
-
-                foreach (var friend in chatParticipants)
-                {
-                    // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
-                    participantResponses.Add(new ParticipantResponseViewModel()
+                    foreach (var friend in chatParticipants)
                     {
-                        Participant = friend,
-                        Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
-                    });
+                        // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
+                        participantResponses.Add(new ParticipantResponseViewModel()
+                        {
+                            Participant = friend,
+                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
+                        });
+                    }
                 }
 
                 var groups = await _profileRepository.GetGroups(item.Groups?.ToArray());
 
                 if(groups != null)
                 {
+                    List<ChatParticipantViewModel> participantGroup = new List<ChatParticipantViewModel> { };
+
                     foreach (var group in groups)
                     {
                         if (group.GroupMemberslist.Where(x => x.ProfileId == item.ProfileId && x.Blocked == true).Count() > 0)
@@ -87,7 +89,7 @@ namespace Juno.Controllers
                         //var list1 = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id).Where(i => group.ChatMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId).Contains(i)).ToList();
 
 
-                        var participantGroup = new ChatParticipantViewModel()
+                        participantGroup.Add(new ChatParticipantViewModel()
                         {
                             ParticipantType = ChatParticipantTypeEnum.Group,
                             Id = group.GroupId,
@@ -96,15 +98,20 @@ namespace Juno.Controllers
                             InitialsColour = group.Avatar.InitialsColour,
                             CircleColour = group.Avatar.CircleColour,
                             Status = set1.Any() ? 0 : 3
-                        };
-
-                        participantResponses.Add(new ParticipantResponseViewModel()
-                        {
-                            Participant = participantGroup,
-                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
                         });
                     }
-                }                
+
+                    foreach (var group in participantGroup)
+                    {
+                        // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
+                        participantResponses.Add(new ParticipantResponseViewModel()
+                        {
+                            Participant = group,
+                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
+                            //Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadGroupMessages(group.Id, item.ProfileId) } /// TODO: Groups don't have a DateSeen set and user/Profile doesn't know if message is seen!
+                        });
+                    }
+                }
 
                 return participantResponses;
             }
@@ -128,6 +135,8 @@ namespace Juno.Controllers
                     {
                         message.Message = _cryptography.Decrypt(message.Message);
                     }
+
+                    var tt = messages.LastOrDefault();
 
                     return messages;
                 }
@@ -284,11 +293,6 @@ namespace Juno.Controllers
                 foreach (var message in messages)
                 {
                     message.Message = _cryptography.Decrypt(message.Message);
-
-                    //if (message.ToId == profileId && message.DateSeen == null)
-                    //{
-                    //    await _profileRepository.MessagesSeen(message._id);
-                    //}
                 }
 
                 return messages;
@@ -360,24 +364,24 @@ namespace Juno.Controllers
 
         #region Maintenance
 
-        /// <summary>Deletes Message that are more than 30 days old.</summary>
-        /// <returns></returns>
-        [NoCache]
-        [HttpDelete("~/DeleteOldMessages")]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        public async Task<IActionResult> DeleteOldMessages()
-        {
-            try
-            {
-                //var oldMessages = await _profileRepository.DeleteOldMessages(); // TODO: Needs to be testet.
+        ///// <summary>Deletes Message that are more than 30 days old.</summary>
+        ///// <returns></returns>
+        //[NoCache]
+        //[HttpDelete("~/DeleteOldMessages")]
+        //[ProducesResponseType((int)HttpStatusCode.NoContent)]
+        //public async Task<IActionResult> DeleteOldMessages()
+        //{
+        //    try
+        //    {
+        //        //var oldMessages = await _profileRepository.DeleteOldMessages(); // TODO: Needs to be testet.
 
-                return NoContent();
-            }
-            catch
-            {
-                throw;
-            }
-        }
+        //        return NoContent();
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
 
         #endregion
     }
