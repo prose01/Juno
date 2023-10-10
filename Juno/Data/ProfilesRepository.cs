@@ -7,9 +7,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Juno.Data
 {
@@ -265,6 +263,29 @@ namespace Juno.Data
                 throw;
             }
         }
+
+        //public int TotalUnreadGroupMessages(string chatMemberId, string profileId)
+        //{
+        //    try
+        //    {
+        //        List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatMemberId));
+
+        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
+
+        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DateSeen, null));
+
+        //        var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+        //        return (int)_context.Messages
+        //                    .Find(combineFilters).CountDocuments();
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
 
 
         public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit)
