@@ -39,7 +39,7 @@ namespace Juno.Chat
             return FilteredGroupParticipants(currentUserId).Where(x => x.Participant.Id != currentUserId);
         }
 
-        public void Join(string userName)
+        public void Join()
         {
             try
             {
