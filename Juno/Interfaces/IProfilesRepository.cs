@@ -1,6 +1,6 @@
 ﻿using Juno.Model;
 using MongoDB.Bson;
-using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,11 +17,11 @@ namespace Juno.Interfaces
         Task<IEnumerable<MessageModel>> GetGroupMessages(string groupId);
         Task<GroupModel> GetGroup(string groupId);
         Task<IEnumerable<GroupModel>> GetGroups(string[] groupIds);
-        Task MessagesSeen(ObjectId messagesId);
-        int TotalUnreadMessages(string chatMemberId, string profileId);
+        Task SaveLastMessagesSeen(CurrentUser currentUser, string groupId, DateTime? lastDateSeen);
+        Task SaveLastGroupMessagesSeen(CurrentUser currentUser, string groupId, DateTime? lastDateSeen);
+        int TotalUnreadMessages(bool groupMessage, string fromId, string toId, DateTime? lastDateSeen);
         Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit);
         Task<IEnumerable<MessageModel>> GetChatsByFilter(ChatFilter chatFilter, int skip, int limit);
         Task DoNotDelete(MessageModel[] messages, bool doNotDelete);
-        //Task<DeleteResult> DeleteOldMessages();
     }
 }

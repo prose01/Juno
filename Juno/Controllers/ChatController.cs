@@ -8,7 +8,6 @@ using MongoDB.Driver.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Juno.Controllers
@@ -32,19 +31,24 @@ namespace Juno.Controllers
 
         [NoCache]
         [HttpPost("~/ParticipantResponses")]
-        public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync([FromBody] CurrentUser item)
+        public async Task<IEnumerable<ParticipantResponseViewModel>> ParticipantResponsesAsync()
         {
             try
             {
-                string[] profileIds = item.ChatMemberslist.Select(p => p.ProfileId).ToArray();
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null)
+                {
+                    throw new ArgumentException($"Current user is null.");
+                }
 
                 List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
-                if (item.ChatMemberslist.Count > 0)
+                if (currentUser.ChatMemberslist.Count > 0)
                 {
                     List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
-                    foreach (var profile in item.ChatMemberslist)
+                    foreach (var profile in currentUser.ChatMemberslist)
                     {
                         var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
 
@@ -53,7 +57,7 @@ namespace Juno.Controllers
                             ParticipantType = ChatParticipantTypeEnum.User,
                             Id = profile.ProfileId,
                             DisplayName = profile.Name,
-                            Initials = profile.Avatar.Initials, 
+                            Initials = profile.Avatar.Initials,
                             InitialsColour = profile.Avatar.InitialsColour,
                             CircleColour = profile.Avatar.CircleColour,
                             Status = oldConnectedParticipants.Any() ? 0 : 3
@@ -62,27 +66,26 @@ namespace Juno.Controllers
 
                     foreach (var friend in chatParticipants)
                     {
-                        // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
                         participantResponses.Add(new ParticipantResponseViewModel()
                         {
                             Participant = friend,
-                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadMessages(friend.Id, item.ProfileId) }
+                            Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
                         });
                     }
                 }
 
-                var groups = await _profileRepository.GetGroups(item.Groups?.ToArray());
+                var groups = await _profileRepository.GetGroups(currentUser.Groups?.Keys.ToArray());
 
-                if(groups != null)
+                if (groups != null)
                 {
                     List<ChatParticipantViewModel> participantGroup = new List<ChatParticipantViewModel> { };
 
                     foreach (var group in groups)
                     {
-                        if (group.GroupMemberslist.Where(x => x.ProfileId == item.ProfileId && x.Blocked == true).Count() > 0)
+                        if (group.GroupMemberslist.Where(x => x.ProfileId == currentUser.ProfileId && x.Blocked == true).Count() > 0)
                             continue;
 
-                        var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != item.ProfileId).Select(x => x.Participant.Id));
+                        var set1 = new HashSet<string>(GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id != currentUser.ProfileId).Select(x => x.Participant.Id));
                         var set2 = new HashSet<string>(group.GroupMemberslist.Where(x => x.Blocked == false).Select(x => x.ProfileId));
                         set1.IntersectWith(set2);
 
@@ -103,12 +106,10 @@ namespace Juno.Controllers
 
                     foreach (var group in participantGroup)
                     {
-                        // TODO: This is called all the time from Front private fetchFriendsList(isBootstrapping: boolean) Move this out in its own call and set a pollingIntervalWindowInstance on it like for fetchFriendsList!!!
                         participantResponses.Add(new ParticipantResponseViewModel()
                         {
                             Participant = group,
                             Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = 0 }
-                            //Metadata = new ParticipantMetadataViewModel { TotalUnreadMessages = _profileRepository.TotalUnreadGroupMessages(group.Id, item.ProfileId) } /// TODO: Groups don't have a DateSeen set and user/Profile doesn't know if message is seen!
                         });
                     }
                 }
@@ -127,7 +128,14 @@ namespace Juno.Controllers
         {
             try
             {
-                if (chatparticipant.ParticipantType == ChatParticipantTypeEnum.Group)
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null)
+                {
+                    throw new ArgumentException($"Current user is null.");
+                }
+
+                if (chatparticipant.ParticipantType == ChatParticipantTypeEnum.Group && currentUser.Groups.ContainsKey(chatparticipant.Id))
                 {
                     var messages = await _profileRepository.GetGroupMessages(chatparticipant.Id);
 
@@ -136,28 +144,31 @@ namespace Juno.Controllers
                         message.Message = _cryptography.Decrypt(message.Message);
                     }
 
-                    var tt = messages.LastOrDefault();
+                    // Save last message seen date with user group
+                    if (messages.Any())
+                    {
+                        _ = _profileRepository.SaveLastGroupMessagesSeen(currentUser, messages.LastOrDefault().ToId, DateTime.Now);
+                    }
 
                     return messages;
                 }
                 else
                 {
-                    var profileId = await _helper.GetCurrentUserProfileId(User);
-
                     var destinataryProfile = await _profileRepository.GetDestinataryProfileByProfileId(chatparticipant.Id);
 
                     if (destinataryProfile != null)
                     {
-                        var messages = await _profileRepository.GetMessages(profileId, destinataryProfile.ProfileId);
+                        var messages = await _profileRepository.GetMessages(currentUser.ProfileId, destinataryProfile.ProfileId);
 
                         foreach (var message in messages)
                         {
                             message.Message = _cryptography.Decrypt(message.Message);
+                        }
 
-                            if (message.ToId == profileId && message.DateSeen == null)
-                            {
-                                await _profileRepository.MessagesSeen(message._id);
-                            }
+                        if (messages.Any())
+                        {
+                            // Save last message seen date with user chatmember
+                            _ = _profileRepository.SaveLastMessagesSeen(currentUser, messages.LastOrDefault().FromId, DateTime.Now);
                         }
 
                         return messages;
@@ -173,21 +184,52 @@ namespace Juno.Controllers
         }
 
         [NoCache]
-        [HttpPost("~/Groups")]
-        public async Task<IEnumerable<GroupChatParticipantViewModel>> Groups()
+        [HttpPost("~/UnreadMessages")]
+        public async Task<Dictionary<string, int>> UnreadMessages()
         {
             try
             {
                 var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
-                //string[] profileIds = { currentUser.ProfileId };
-                //var avatars = await _profileRepository.GetProfileAvatarrByIds(profileIds);
 
                 if (currentUser == null)
                 {
                     throw new ArgumentException($"Current user is null.");
                 }
 
-                var groups = await _profileRepository.GetGroups(currentUser.Groups.ToArray());
+                Dictionary<string, int> unreadMessages = new Dictionary<string, int>();
+
+                foreach (var profile in currentUser.ChatMemberslist)
+                {
+                    unreadMessages.Add(profile.ProfileId, _profileRepository.TotalUnreadMessages(false, profile.ProfileId, currentUser.ProfileId, profile.LastMessagesSeen));
+                }
+
+                foreach (KeyValuePair<string, DateTime?> group in currentUser.Groups)
+                {
+                    unreadMessages.Add(group.Key, _profileRepository.TotalUnreadMessages(true, currentUser.ProfileId, group.Key, group.Value));
+                }
+
+                return unreadMessages;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        [NoCache]
+        [HttpPost("~/Groups")]
+        public async Task<IEnumerable<GroupChatParticipantViewModel>> Groups()
+        {
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null)
+                {
+                    throw new ArgumentException($"Current user is null.");
+                }
+
+                var groups = await _profileRepository.GetGroups(currentUser.Groups?.Keys.ToArray());
 
                 List<GroupChatParticipantViewModel> allGroupParticipants = new List<GroupChatParticipantViewModel>();
                 List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
@@ -195,8 +237,6 @@ namespace Juno.Controllers
                 foreach (var group in groups)
                 {
                     var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == currentUser.ProfileId);
-
-                    //var avatarInfo = avatars.Where(p => p.ProfileId == currentUser.ProfileId).ToList();
 
                     chatParticipants.Add(new ChatParticipantViewModel()
                     {
@@ -359,29 +399,6 @@ namespace Juno.Controllers
                 throw;
             }
         }
-
-        #endregion
-
-        #region Maintenance
-
-        ///// <summary>Deletes Message that are more than 30 days old.</summary>
-        ///// <returns></returns>
-        //[NoCache]
-        //[HttpDelete("~/DeleteOldMessages")]
-        //[ProducesResponseType((int)HttpStatusCode.NoContent)]
-        //public async Task<IActionResult> DeleteOldMessages()
-        //{
-        //    try
-        //    {
-        //        //var oldMessages = await _profileRepository.DeleteOldMessages(); // TODO: Needs to be testet.
-
-        //        return NoContent();
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
 
         #endregion
     }

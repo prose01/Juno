@@ -70,7 +70,7 @@ namespace Juno.Chat
                         });
                     }
 
-                    var groups = _profileRepository.GetGroups(currentUser.Groups?.ToArray()).Result;
+                    var groups = _profileRepository.GetGroups(currentUser.Groups?.Keys.ToArray()).Result;
 
                     if (groups != null)
                     {
@@ -123,8 +123,6 @@ namespace Juno.Chat
                     // This will be used as the user's unique ID to be used on ng-chat as the connected user.
                     // You should most likely use another ID on your application
                     Clients.Caller.SendAsync("generatedUserId", currentUser.ProfileId);
-
-                    //Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);        // TODO: This seems to cause users to see other peoples groups!
                 }
             }
             catch
@@ -132,36 +130,6 @@ namespace Juno.Chat
                 throw;
             }
         }
-
-        //public async Task GroupCreated(GroupChatParticipantViewModel group)       // TODO: This need to save group to DB
-        //{
-        //    try
-        //    {
-        //        AllGroupParticipants.Add(group);
-
-        //        // Pushing the current user to the "chatting to" list to keep track of who's created the group as well.
-        //        // In your application you'll probably want a more sofisticated group persistency and management
-        //        group.ChattingTo.Add(new ChatParticipantViewModel()
-        //        {
-        //            Id = Context.ConnectionId
-        //        });
-
-        //        AllConnectedParticipants.Add(new ParticipantResponseViewModel()
-        //        {
-        //            Metadata = new ParticipantMetadataViewModel()
-        //            {
-        //                TotalUnreadMessages = 0
-        //            },
-        //            Participant = group
-        //        });
-
-        //        Clients.All.SendAsync("friendsListChanged", AllConnectedParticipants);
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
 
         public async Task SendMessage(MessageModel message)
         {
@@ -235,7 +203,7 @@ namespace Juno.Chat
                         message.Message = encryptedMessage;
 
                         await _profileRepository.SaveMessage(message);
-                        await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile);        // TODO: Group should be notified of new messages or is this already done?
+                        await _profileRepository.NotifyNewChatMember(currentUser, destinataryProfile); 
                     }
                 }                
             }

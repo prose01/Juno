@@ -14,13 +14,11 @@ namespace Juno.Data
     public class ProfilesRepository : IProfilesRepository
     {
         private readonly ProfileContext _context = null;
-        //private readonly int _deleteMessagesOlderThan;
         private readonly int _maxMessages;
 
         public ProfilesRepository(IOptions<Settings> settings, IConfiguration config)
         {
             _context = new ProfileContext(settings);
-            //_deleteMessagesOlderThan = config.GetValue<int>("DeleteMessagesOlderThan");
             _maxMessages = config.GetValue<int>("DeleteMaxMessageNumber");
         }
 
@@ -137,7 +135,7 @@ namespace Juno.Data
                     var update = Builders<Profile>
                                     .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUser.ProfileId, Name = currentUser.Name, Blocked = false });
 
-                    await _context.Profiles.FindOneAndUpdateAsync(filter, update);
+                    await _context.Profiles.UpdateOneAsync(filter, update);
                 }
             }
             catch
@@ -223,17 +221,33 @@ namespace Juno.Data
             }
         }
 
-        public async Task MessagesSeen(ObjectId messagesId)
+        public async Task SaveLastMessagesSeen(CurrentUser currentUser, string profileId, DateTime? lastDateSeen)
         {
             try
             {
-                var filter = Builders<MessageModel>
-                               .Filter.Eq(m => m._id, messagesId);
+                if (lastDateSeen != null)
+                {
+                    var filter = Builders<CurrentUser>
+                                .Filter.Eq(c => c.ProfileId, currentUser.ProfileId);
 
-                var update = Builders<MessageModel>
-                            .Update.Set(m => m.DateSeen, DateTime.Now);
 
-                await _context.Messages.FindOneAndUpdateAsync(filter, update);
+                    List<ChatMember> updateChatMembers = new List<ChatMember>();
+
+                    foreach (var member in currentUser.ChatMemberslist)
+                    {
+                        if (member.ProfileId == profileId)
+                        {
+                            member.LastMessagesSeen = lastDateSeen;
+                        }
+
+                        updateChatMembers.Add(member);
+                    }
+
+                    var update = Builders<CurrentUser>
+                                    .Update.Set(c => c.ChatMemberslist, updateChatMembers);
+
+                    await _context.CurrentUser.UpdateOneAsync(filter, update);
+                }
             }
             catch
             {
@@ -241,22 +255,25 @@ namespace Juno.Data
             }
         }
 
-        public int TotalUnreadMessages(string chatMemberId, string profileId)
+        public async Task SaveLastGroupMessagesSeen(CurrentUser currentUser, string groupId, DateTime? lastDateSeen)
         {
             try
             {
-                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+                if (lastDateSeen != null)
+                {
+                    if (currentUser.Groups.ContainsKey(groupId))
+                    {
+                        currentUser.Groups[groupId] = lastDateSeen;
 
-                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatMemberId));
+                        var filter = Builders<CurrentUser>
+                                        .Filter.Eq(c => c.ProfileId, currentUser.ProfileId);
 
-                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
+                        var update = Builders<CurrentUser>
+                                    .Update.Set(c => c.Groups, currentUser.Groups);
 
-                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DateSeen, null));
-
-                var combineFilters = Builders<MessageModel>.Filter.And(filters);
-
-                return (int)_context.Messages
-                            .Find(combineFilters).CountDocuments();
+                        await _context.CurrentUser.UpdateOneAsync(filter, update);
+                    }
+                }
             }
             catch
             {
@@ -264,29 +281,41 @@ namespace Juno.Data
             }
         }
 
-        //public int TotalUnreadGroupMessages(string chatMemberId, string profileId)
-        //{
-        //    try
-        //    {
-        //        List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+        public int TotalUnreadMessages(bool groupMessage, string fromId, string toId, DateTime? lastDateSeen)
+        {
+            try
+            {
+                if (lastDateSeen != null)
+                {
+                    List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
-        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, chatMemberId));
+                    // Normal chat between profiles have both toId and fromId, whereas for groups we don't want message user has written themselves.
+                    if (groupMessage)
+                    {
+                        filters.Add(Builders<MessageModel>.Filter.Ne(m => m.FromId, fromId));
+                    }
+                    else
+                    {
+                        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, fromId));
+                    }
 
-        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, profileId));
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, toId));
 
-        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DateSeen, null));
+                    filters.Add(Builders<MessageModel>.Filter.Gt(m => m.DateSent, lastDateSeen));
 
-        //        var combineFilters = Builders<MessageModel>.Filter.And(filters);
+                    var combineFilters = Builders<MessageModel>.Filter.And(filters);
 
-        //        return (int)_context.Messages
-        //                    .Find(combineFilters).CountDocuments();
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
+                    return (int)_context.Messages
+                                .Find(combineFilters).CountDocuments();
+                }
 
+                return 0;
+            }
+            catch
+            {
+                throw;
+            }
+        }
 
         public async Task<IEnumerable<MessageModel>> GetProfileMessages(string profileId, int skip, int limit)
         {
@@ -377,10 +406,8 @@ namespace Juno.Data
         {
             try
             {
-
                 foreach (var message in messages)
                 {
-
                     List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
 
                     filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, message.FromId));
@@ -394,7 +421,7 @@ namespace Juno.Data
                     var update = Builders<MessageModel>
                                 .Update.Set(m => m.DoNotDelete, doNotDelete);
 
-                    await _context.Messages.FindOneAndUpdateAsync(combineFilters, update);
+                    await _context.Messages.UpdateOneAsync(combineFilters, update);
                 }
             }
             catch
@@ -403,36 +430,10 @@ namespace Juno.Data
             }
         }
 
-
-        #region Maintenance
-
-        ///// <summary>Deletes Messages that are more than 30 days old.</summary>
-        ///// <returns></returns>
-        //public async Task<DeleteResult> DeleteOldMessages()
-        //{
-        //    try
-        //    {
-        //        List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
-
-        //        filters.Add(Builders<MessageModel>.Filter.Gt(m => m.DateSeen, DateTime.Now.AddDays(-_deleteMessagesOlderThan)));
-
-        //        filters.Add(Builders<MessageModel>.Filter.Eq(m => m.DoNotDelete, false));
-
-        //        var combineFilters = Builders<MessageModel>.Filter.And(filters);
-
-        //        return await _context.Messages.DeleteManyAsync(combineFilters);
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
-
-        #endregion
-
         private ProjectionDefinition<Profile> GetProjection()
         {
             ProjectionDefinition<Profile> projection = "{ " +
+                "_id: 0, " +
                 "Auth0Id: 0, " +
                 "Seeking: 0, " +
                 "Gender: 0, " +
@@ -442,7 +443,6 @@ namespace Juno.Data
                 "Visited: 0, " +
                 "IsBookmarked: 0, " +
                 "Likes: 0, " +
-                "_id: 0, " +
                 "Admin:0, " +
                 "CreatedOn: 0, " +
                 "UpdatedOn: 0, " +
@@ -474,6 +474,7 @@ namespace Juno.Data
         private ProjectionDefinition<CurrentUser> GetCurrentUserProjection()
         {
             ProjectionDefinition<CurrentUser> projection = "{ " +
+                "_id: 0, " +
                 "Auth0Id: 0, " +
                 "Seeking: 0, " +
                 "Gender: 0, " +
@@ -483,7 +484,6 @@ namespace Juno.Data
                 "Visited: 0, " +
                 "IsBookmarked: 0, " +
                 "Likes: 0, " +
-                "_id: 0, " +
                 "CreatedOn: 0, " +
                 "UpdatedOn: 0, " +
                 "LastActive: 0, " +

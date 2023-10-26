@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Juno.Model
 {
@@ -20,6 +21,6 @@ namespace Juno.Model
 
         public override AvatarModel Avatar { get; set; }
 
-        public List<string> Groups { get; set; }
+        public Dictionary<string, DateTime?> Groups { get; set; }
     }
 }
