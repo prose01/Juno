@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace Juno
 {
@@ -54,8 +56,8 @@ namespace Juno
                 .AddSignalR(hubOptions =>
                 {
                     hubOptions.EnableDetailedErrors = true;
-                    hubOptions.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
-                    hubOptions.KeepAliveInterval = TimeSpan.FromMilliseconds(15);
+                    //hubOptions.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
+                    //hubOptions.KeepAliveInterval = TimeSpan.FromMilliseconds(15);
                 });
 
 
@@ -70,6 +72,24 @@ namespace Juno
             {
                 options.Authority = domain;
                 options.Audience = Configuration["Auth0_ApiIdentifier"];
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/groupchathub")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
             
             // register the scope authorization handler
@@ -157,7 +177,13 @@ namespace Juno
             {
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
                 //endpoints.MapHub<ChatHub>("/chatHub");
-                endpoints.MapHub<GroupChatHub>("/GroupChatHub");
+                endpoints.MapHub<GroupChatHub>("/GroupChatHub", options =>
+                {
+                    options.Transports =
+                        HttpTransportType.WebSockets |
+                        HttpTransportType.LongPolling;
+                }
+                );
             });
         }
     }

@@ -151,6 +151,7 @@ namespace Juno.Chat
                         message.ToName = destinataryGroup.Name;
                         message.FromName = currentUser.Name;
                         message.DoNotDelete = false;
+                        message.ParticipantType = ChatParticipantTypeEnum.Group.ToString();
 
                         if (sender != null)
                         {
