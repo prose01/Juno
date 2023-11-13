@@ -7,7 +7,7 @@ namespace Juno.Model
     public class Profile : AbstractProfile
     {
         #region special properties
-        public List<ChatMember> ChatMemberslist { internal get; set; }
+        public List<Bookmark> Bookmarks { internal get; set; }
         #endregion
 
         public override string ProfileId { get; set; }

@@ -6,7 +6,7 @@ namespace Juno.Model
     public class CurrentUser : AbstractProfile
     {
         #region special properties
-        public List<ChatMember> ChatMemberslist { get; set; }
+        public List<Bookmark> Bookmarks { get; set; }
         #endregion
 
         public string Auth0Id { internal get; set; }

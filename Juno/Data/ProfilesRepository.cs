@@ -95,6 +95,8 @@ namespace Juno.Data
                     {
                         Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId),
 
+                        Builders<MessageModel>.Filter.Eq(m => m.FromId, message.FromId),
+
                         Builders<MessageModel>.Filter.Ne(m => m.DoNotDelete, true),
                     };
 
@@ -123,26 +125,26 @@ namespace Juno.Data
             }
         }
 
-        public async Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile)
-        {
-            try
-            {
-                if (!destinataryProfile.ChatMemberslist.Any(m => m.ProfileId == currentUser.ProfileId))
-                {
-                    var filter = Builders<Profile>
-                                .Filter.Eq(e => e.ProfileId, destinataryProfile.ProfileId);
+        //public async Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile)      // TODO: Check if this is still relevent or correct!
+        //{
+        //    try
+        //    {
+        //        if (!destinataryProfile.Bookmarks.Any(m => m.ProfileId == currentUser.ProfileId))
+        //        {
+        //            var filter = Builders<Profile>
+        //                        .Filter.Eq(e => e.ProfileId, destinataryProfile.ProfileId);
 
-                    var update = Builders<Profile>
-                                    .Update.Push(p => p.ChatMemberslist, new ChatMember() { ProfileId = currentUser.ProfileId, Name = currentUser.Name, Blocked = false });
+        //            var update = Builders<Profile>
+        //                            .Update.Push(p => p.Bookmarks, new Bookmark() { ProfileId = currentUser.ProfileId, Name = currentUser.Name, Blocked = false, IsBookmarked = false });
 
-                    await _context.Profiles.UpdateOneAsync(filter, update);
-                }
-            }
-            catch
-            {
-                throw;
-            }
-        }
+        //            await _context.Profiles.UpdateOneAsync(filter, update);
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        throw;
+        //    }
+        //}
 
         public async Task<IEnumerable<MessageModel>> GetMessages(string currentUserProfileId, string profileId)
         {
@@ -231,20 +233,20 @@ namespace Juno.Data
                                 .Filter.Eq(c => c.ProfileId, currentUser.ProfileId);
 
 
-                    List<ChatMember> updateChatMembers = new List<ChatMember>();
+                    List<Bookmark> updateBookmarks = new List<Bookmark>();
 
-                    foreach (var member in currentUser.ChatMemberslist)
+                    foreach (var member in currentUser.Bookmarks)
                     {
                         if (member.ProfileId == profileId)
                         {
                             member.LastMessagesSeen = lastDateSeen;
                         }
 
-                        updateChatMembers.Add(member);
+                        updateBookmarks.Add(member);
                     }
 
                     var update = Builders<CurrentUser>
-                                    .Update.Set(c => c.ChatMemberslist, updateChatMembers);
+                                    .Update.Set(c => c.Bookmarks, updateBookmarks);
 
                     await _context.CurrentUser.UpdateOneAsync(filter, update);
                 }
@@ -438,7 +440,6 @@ namespace Juno.Data
                 "Seeking: 0, " +
                 "Gender: 0, " +
                 "Languagecode: 0, " +
-                "Bookmarks: 0, " +
                 "ProfileFilter: 0, " +
                 "Visited: 0, " +
                 "IsBookmarked: 0, " +
@@ -479,7 +480,6 @@ namespace Juno.Data
                 "Seeking: 0, " +
                 "Gender: 0, " +
                 "Languagecode: 0, " +
-                "Bookmarks: 0, " +
                 "ProfileFilter: 0, " +
                 "Visited: 0, " +
                 "IsBookmarked: 0, " +

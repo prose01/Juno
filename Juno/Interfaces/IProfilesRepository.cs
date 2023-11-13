@@ -12,7 +12,7 @@ namespace Juno.Interfaces
         Task<CurrentUser> GetCurrentUserByAuth0Id(string auth0Id);
         Task<Profile> GetDestinataryProfileByProfileId(string profileId);
         Task SaveMessage(MessageModel message);
-        Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile);
+        //Task NotifyNewChatMember(CurrentUser currentUser, Profile destinataryProfile);
         Task<IEnumerable<MessageModel>> GetMessages(string currentUserProfileId, string profileId);
         Task<IEnumerable<MessageModel>> GetGroupMessages(string groupId);
         Task<GroupModel> GetGroup(string groupId);

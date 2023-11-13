@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Juno.Model
 {
-    public class ChatMember
+    public class Bookmark
     {
         public string ProfileId { get; set; }
 
@@ -12,5 +11,7 @@ namespace Juno.Model
         public DateTime? LastMessagesSeen { get; set; }
 
         public bool Blocked { get; set; }
+
+        public bool IsBookmarked { get; set; }
     }
 }

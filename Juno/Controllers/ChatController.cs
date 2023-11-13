@@ -44,11 +44,11 @@ namespace Juno.Controllers
 
                 List<ParticipantResponseViewModel> participantResponses = new List<ParticipantResponseViewModel> { };
 
-                if (currentUser.ChatMemberslist.Count > 0)
+                if (currentUser.Bookmarks.Count > 0)
                 {
                     List<ChatParticipantViewModel> chatParticipants = new List<ChatParticipantViewModel> { };
 
-                    foreach (var profile in currentUser.ChatMemberslist)
+                    foreach (var profile in currentUser.Bookmarks)
                     {
                         var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
 
@@ -167,7 +167,7 @@ namespace Juno.Controllers
 
                         if (messages.Any())
                         {
-                            // Save last message seen date with user chatmember
+                            // Save last message seen date with user
                             _ = _profileRepository.SaveLastMessagesSeen(currentUser, messages.LastOrDefault().FromId, DateTime.Now);
                         }
 
@@ -198,7 +198,7 @@ namespace Juno.Controllers
 
                 Dictionary<string, int> unreadMessages = new Dictionary<string, int>();
 
-                foreach (var profile in currentUser.ChatMemberslist)
+                foreach (var profile in currentUser.Bookmarks)
                 {
                     unreadMessages.Add(profile.ProfileId, _profileRepository.TotalUnreadMessages(false, profile.ProfileId, currentUser.ProfileId, profile.LastMessagesSeen));
                 }
