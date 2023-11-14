@@ -50,18 +50,21 @@ namespace Juno.Controllers
 
                     foreach (var profile in currentUser.Bookmarks)
                     {
-                        var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
-
-                        chatParticipants.Add(new ChatParticipantViewModel()
+                        if (!profile.Blocked)
                         {
-                            ParticipantType = ChatParticipantTypeEnum.User,
-                            Id = profile.ProfileId,
-                            DisplayName = profile.Name,
-                            Initials = profile.Avatar.Initials,
-                            InitialsColour = profile.Avatar.InitialsColour,
-                            CircleColour = profile.Avatar.CircleColour,
-                            Status = oldConnectedParticipants.Any() ? 0 : 3
-                        });
+                            var oldConnectedParticipants = GroupChatHub.AllConnectedParticipants.Where(x => x.Participant.Id == profile.ProfileId);
+
+                            chatParticipants.Add(new ChatParticipantViewModel()
+                            {
+                                ParticipantType = ChatParticipantTypeEnum.User,
+                                Id = profile.ProfileId,
+                                DisplayName = profile.Name,
+                                Initials = profile.Avatar.Initials,
+                                InitialsColour = profile.Avatar.InitialsColour,
+                                CircleColour = profile.Avatar.CircleColour,
+                                Status = oldConnectedParticipants.Any() ? 0 : 3
+                            });
+                        }
                     }
 
                     foreach (var friend in chatParticipants)

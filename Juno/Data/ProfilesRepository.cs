@@ -85,23 +85,25 @@ namespace Juno.Data
         {
             try
             {
-                var filter = Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId);
-                var count = _context.Messages.CountDocuments(filter);
+                List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>();
+
+                filters.Add(Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId));
+
+                filters.Add(Builders<MessageModel>.Filter.Ne(m => m.DoNotDelete, true));
+
+                // We allow privateMessges to have maximum number of messeges for two profiles combined.
+                if (message.MessageType == MessageType.PrivateMessage)
+                {
+                    filters.Add(Builders<MessageModel>.Filter.Eq(m => m.FromId, message.FromId));
+                }
+
+                var combineFilters = Builders<MessageModel>.Filter.And(filters);
+
+                var count = _context.Messages.CountDocuments(combineFilters);
 
                 // Check if Profile has reached max number of message.
                 if (count >= _maxMessages)
                 {
-                    List<FilterDefinition<MessageModel>> filters = new List<FilterDefinition<MessageModel>>
-                    {
-                        Builders<MessageModel>.Filter.Eq(m => m.ToId, message.ToId),
-
-                        Builders<MessageModel>.Filter.Eq(m => m.FromId, message.FromId),
-
-                        Builders<MessageModel>.Filter.Ne(m => m.DoNotDelete, true),
-                    };
-
-                    var combineFilters = Builders<MessageModel>.Filter.And(filters);
-
                     SortDefinition<MessageModel> sortDefinition = Builders<MessageModel>.Sort.Ascending(m => m.DateSent);
 
                     List<MessageModel> messageToBeDeleted = await _context.Messages.Find(combineFilters).Sort(sortDefinition).Limit(1).ToListAsync();
