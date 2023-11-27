@@ -144,7 +144,7 @@ namespace Juno.Chat
                     var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
 
                     // If currentUser is blocked on Grouplist then do not go any further.
-                    if (!destinataryGroup.GroupMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
+                    if (!destinataryGroup.GroupMemberslist.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin) 
                     {
                         message.MessageType = MessageType.Group;
                         message.ToId = destinataryGroup.GroupId;
@@ -185,7 +185,7 @@ namespace Juno.Chat
                     var currentUser = await _profileRepository.GetCurrentUserByAuth0Id(Context.UserIdentifier);
 
                     // If currentUser is blocked on Grouplist then do not go any further.
-                    if (!destinataryProfile.Bookmarks.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)     // TODO: This needs to check if currentUser is blocked from group
+                    if (!destinataryProfile.Bookmarks.Any(m => m.ProfileId == currentUser.ProfileId && m.Blocked) || currentUser.Admin)
                     {
                         message.MessageType = MessageType.PrivateMessage;
                         message.ToId = destinataryProfile.ProfileId;

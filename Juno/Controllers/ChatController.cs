@@ -187,6 +187,38 @@ namespace Juno.Controllers
         }
 
         [NoCache]
+        [HttpPost("~/SaveLastMessagesSeen")]
+        public async Task<IActionResult> SaveLastMessagesSeen([FromBody] ChatParticipantViewModel chatparticipant)
+        {
+            try
+            {
+                var currentUser = await _helper.GetCurrentUserByAuth0Id(User);
+
+                if (currentUser == null)
+                {
+                    throw new ArgumentException($"Current user is null.");
+                }
+
+                if (chatparticipant.ParticipantType == ChatParticipantTypeEnum.Group && currentUser.Groups.ContainsKey(chatparticipant.Id))
+                {
+                    // Save last message seen date with user group
+                    _ = _profileRepository.SaveLastGroupMessagesSeen(currentUser, chatparticipant.Id, DateTime.Now);
+                }
+                else
+                {
+                    // Save last message seen date with user
+                    _ = _profileRepository.SaveLastMessagesSeen(currentUser, chatparticipant.Id, DateTime.Now);
+                }
+
+                return NoContent();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        [NoCache]
         [HttpPost("~/UnreadMessages")]
         public async Task<Dictionary<string, int>> UnreadMessages()
         {
