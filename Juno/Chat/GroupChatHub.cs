@@ -150,6 +150,7 @@ namespace Juno.Chat
                         message.ToId = destinataryGroup.GroupId;
                         message.ToName = destinataryGroup.Name;
                         message.FromName = currentUser.Name;
+                        message.FromAvatar = currentUser.Avatar;
                         message.DoNotDelete = false;
                         message.ParticipantType = ChatParticipantTypeEnum.Group.ToString();
 
@@ -191,6 +192,7 @@ namespace Juno.Chat
                         message.ToId = destinataryProfile.ProfileId;
                         message.ToName = destinataryProfile.Name;
                         message.FromName = currentUser.Name;
+                        message.FromAvatar = currentUser.Avatar;
                         message.DoNotDelete = false;
 
                         if (sender != null)

@@ -15,6 +15,8 @@ namespace Juno.Model
 
         public string FromId { get; set; }
 
+        public AvatarModel FromAvatar { get; set; }
+
         public string FromName { get; set; }
 
         public string ToId { get; set; }
