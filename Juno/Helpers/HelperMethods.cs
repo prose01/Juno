@@ -1,6 +1,6 @@
 ﻿using Juno.Interfaces;
 using Juno.Model;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -13,10 +13,10 @@ namespace Juno.Helpers
         private readonly IProfilesRepository _profileRepository;
         private readonly string _nameidentifier;
 
-        public HelperMethods(IProfilesRepository profileRepository, IOptions<Settings> settings)
+        public HelperMethods(IConfiguration config, IProfilesRepository profileRepository)
         {
+            _nameidentifier = config.GetValue<string>("Auth0_Claims_nameidentifier");
             _profileRepository = profileRepository;
-            _nameidentifier = settings.Value.auth0Id;
         }
 
         /// <summary>Gets the current user profile.</summary>

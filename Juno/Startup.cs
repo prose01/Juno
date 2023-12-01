@@ -134,13 +134,6 @@ namespace Juno
                     { securitySchema, new[] { "Bearer" } }
                 });
             });
-
-            services.Configure<Settings>(options =>
-            {
-                options.ConnectionString = Configuration.GetSection("Mongo_ConnectionString").Value;
-                options.Database = Configuration.GetSection("Mongo_Database").Value;
-                options.auth0Id = Configuration.GetSection("Auth0_Claims_nameidentifier").Value;
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,7 +1,6 @@
 ﻿using Juno.Interfaces;
 using Juno.Model;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
@@ -16,9 +15,9 @@ namespace Juno.Data
         private readonly ProfileContext _context = null;
         private readonly int _maxMessages;
 
-        public ProfilesRepository(IOptions<Settings> settings, IConfiguration config)
+        public ProfilesRepository(IConfiguration config)
         {
-            _context = new ProfileContext(settings);
+            _context = new ProfileContext(config);
             _maxMessages = config.GetValue<int>("DeleteMaxMessageNumber");
         }
 
