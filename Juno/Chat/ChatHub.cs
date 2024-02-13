@@ -12,7 +12,7 @@
 //    [Authorize]
 //    public class ChatHub : Hub
 //    {
-//        /// TODO: Kig på https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client
+//        /// Kig på https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client
 //        /// https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-5.0
 //        /// 
 
